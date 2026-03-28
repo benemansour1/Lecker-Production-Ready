@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Lecker Candy Store API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication
+  - name: products
+    description: Product management
+  - name: orders
+    description: Order management
+  - name: admin
+    description: Admin operations
+  - name: settings
+    description: Store settings
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,346 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/send-otp:
+    post:
+      operationId: sendOtp
+      tags: [auth]
+      summary: Send OTP to phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOtpRequest"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/verify-otp:
+    post:
+      operationId: verifyOtp
+      tags: [auth]
+      summary: Verify OTP and login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyOtpRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid OTP
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout current user
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user info
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /products:
+    get:
+      operationId: getProducts
+      tags: [products]
+      summary: Get all active products
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /admin/products:
+    get:
+      operationId: adminGetProducts
+      tags: [admin]
+      summary: Get all products including disabled (admin)
+      responses:
+        "200":
+          description: List of all products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+    post:
+      operationId: createProduct
+      tags: [admin]
+      summary: Create a new product
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductRequest"
+      responses:
+        "201":
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+
+  /admin/products/{id}:
+    put:
+      operationId: updateProduct
+      tags: [admin]
+      summary: Update a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductRequest"
+      responses:
+        "200":
+          description: Product updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+    delete:
+      operationId: deleteProduct
+      tags: [admin]
+      summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Product deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /orders:
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Create a new order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/my:
+    get:
+      operationId: getMyOrders
+      tags: [orders]
+      summary: Get current user's orders
+      responses:
+        "200":
+          description: User orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /admin/orders:
+    get:
+      operationId: adminGetOrders
+      tags: [admin]
+      summary: Get all orders (admin)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, preparing, ready, delivered, cancelled]
+      responses:
+        "200":
+          description: All orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /admin/orders/{id}/status:
+    put:
+      operationId: updateOrderStatus
+      tags: [admin]
+      summary: Update order status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOrderStatusRequest"
+      responses:
+        "200":
+          description: Order updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard stats
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/revenue/daily:
+    get:
+      operationId: getDailyRevenue
+      tags: [admin]
+      summary: Get daily revenue
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Daily revenue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueData"
+
+  /admin/revenue/monthly:
+    get:
+      operationId: getMonthlyRevenue
+      tags: [admin]
+      summary: Get monthly revenue
+      parameters:
+        - name: month
+          in: query
+          schema:
+            type: string
+        - name: year
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Monthly revenue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueData"
+
+  /admin/settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get store settings
+      responses:
+        "200":
+          description: Store settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update store settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSettingsRequest"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettings"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +382,355 @@ components:
       required:
         - status
 
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SendOtpRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+      required:
+        - phone
+
+    VerifyOtpRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        otp:
+          type: string
+      required:
+        - phone
+        - otp
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+      required:
+        - user
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        phone:
+          type: string
+        name:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [user, admin]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - phone
+        - role
+        - createdAt
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameAr:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - nameAr
+        - category
+        - price
+        - isActive
+        - sortOrder
+        - createdAt
+
+    CreateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        nameAr:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        imageUrl:
+          type: string
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+      required:
+        - name
+        - nameAr
+        - category
+        - price
+
+    UpdateProductRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        nameAr:
+          type: string
+        category:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        imageUrl:
+          type: string
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    OrderItem:
+      type: object
+      properties:
+        productId:
+          type: integer
+        productName:
+          type: string
+        productNameAr:
+          type: string
+        quantity:
+          type: integer
+        price:
+          type: number
+        subtotal:
+          type: number
+      required:
+        - productId
+        - productName
+        - productNameAr
+        - quantity
+        - price
+        - subtotal
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+          nullable: true
+        customerPhone:
+          type: string
+        customerName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [new, preparing, ready, delivered, cancelled]
+        total:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        notes:
+          type: string
+          nullable: true
+        deliveryAddress:
+          type: string
+          nullable: true
+        paymentMethod:
+          type: string
+          enum: [cash, card, online]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - customerPhone
+        - status
+        - total
+        - items
+        - paymentMethod
+        - createdAt
+        - updatedAt
+
+    CreateOrderRequest:
+      type: object
+      properties:
+        customerPhone:
+          type: string
+        customerName:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              productId:
+                type: integer
+              quantity:
+                type: integer
+            required:
+              - productId
+              - quantity
+        notes:
+          type: string
+        deliveryAddress:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [cash, card, online]
+      required:
+        - customerPhone
+        - items
+        - paymentMethod
+
+    UpdateOrderStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, preparing, ready, delivered, cancelled]
+      required:
+        - status
+
+    AdminStats:
+      type: object
+      properties:
+        totalOrders:
+          type: integer
+        todayOrders:
+          type: integer
+        todayRevenue:
+          type: number
+        monthRevenue:
+          type: number
+        pendingOrders:
+          type: integer
+        totalProducts:
+          type: integer
+      required:
+        - totalOrders
+        - todayOrders
+        - todayRevenue
+        - monthRevenue
+        - pendingOrders
+        - totalProducts
+
+    RevenueData:
+      type: object
+      properties:
+        total:
+          type: number
+        orderCount:
+          type: integer
+        breakdown:
+          type: array
+          items:
+            type: object
+            properties:
+              label:
+                type: string
+              revenue:
+                type: number
+              orders:
+                type: integer
+            required:
+              - label
+              - revenue
+              - orders
+      required:
+        - total
+        - orderCount
+        - breakdown
+
+    StoreSettings:
+      type: object
+      properties:
+        isOpen:
+          type: boolean
+        deliveryEnabled:
+          type: boolean
+        deliveryFee:
+          type: number
+        minOrderAmount:
+          type: number
+        storeName:
+          type: string
+        storePhone:
+          type: string
+        storeAddress:
+          type: string
+      required:
+        - isOpen
+        - deliveryEnabled
+        - deliveryFee
+        - minOrderAmount
+        - storeName
+        - storePhone
+        - storeAddress
+
+    UpdateSettingsRequest:
+      type: object
+      properties:
+        isOpen:
+          type: boolean
+        deliveryEnabled:
+          type: boolean
+        deliveryFee:
+          type: number
+        minOrderAmount:
+          type: number
+        storeName:
+          type: string
+        storePhone:
+          type: string
+        storeAddress:
+          type: string

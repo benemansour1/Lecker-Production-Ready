@@ -1,0 +1,24 @@
+packages:
+  "framer-motion": "Animations and page transitions for premium feel"
+  "zustand": "Global state management for shopping cart"
+  "recharts": "Data visualization for admin revenue dashboard"
+  "date-fns": "Date formatting for orders and charts"
+  "clsx": "Utility for conditionally joining classNames"
+  "tailwind-merge": "Utility for merging tailwind classes"
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod resolver for forms"
+
+images:
+  - path: "artifacts/lecker/public/images/lecker-logo.png"
+    description: "Elegant typography logo saying 'lecker' in gold and warm amber on a dark chocolate brown transparent background, high end confectionery aesthetic"
+    aspect_ratio: "1:1"
+  - path: "artifacts/lecker/public/images/hero-bg.png"
+    description: "Abstract luxurious background with dark chocolate and rich coffee tones, flowing liquid chocolate waves, and subtle floating gold leaf/dust accents, photorealistic"
+    aspect_ratio: "16:9"
+  - path: "artifacts/lecker/public/images/empty-cart.png"
+    description: "A beautifully illustrated empty elegant golden wireframe shopping basket sitting on a dark chocolate brown surface with dramatic spotlighting"
+    aspect_ratio: "1:1"
+
+notes:
+  - RTL (Right-to-Left) layout required for Arabic text.
+  - Using generated hooks from @workspace/api-client-react.

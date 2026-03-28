@@ -1,0 +1,84 @@
+import React from 'react';
+import { Link, useLocation } from 'wouter';
+import { ShoppingBag, User, LogOut, Package } from 'lucide-react';
+import { useCart } from '@/hooks/use-cart';
+import { useGetMe, useLogout } from '@workspace/api-client-react';
+import { motion } from 'framer-motion';
+
+export function CustomerLayout({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const cartCount = useCart((s) => s.getItemCount());
+  const { data: user } = useGetMe({ query: { retry: false } });
+  const logoutMutation = useLogout();
+
+  const handleLogout = async () => {
+    await logoutMutation.mutateAsync();
+    window.location.reload();
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-40 glass-panel border-b-0 border-x-0 rounded-b-3xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3 group">
+            <img src={`${import.meta.env.BASE_URL}images/lecker-logo.png`} alt="Lecker" className="h-12 w-12 object-contain group-hover:scale-110 transition-transform" />
+            <span className="font-display text-3xl text-gold-gradient mt-2">لكر</span>
+          </Link>
+
+          <div className="flex items-center gap-4 sm:gap-6">
+            <Link href="/cart" className="relative p-2 text-foreground hover:text-primary transition-colors">
+              <ShoppingBag className="w-6 h-6" />
+              {cartCount > 0 && (
+                <motion.span 
+                  initial={{ scale: 0 }} animate={{ scale: 1 }}
+                  className="absolute -top-1 -end-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md shadow-primary/40"
+                >
+                  {cartCount}
+                </motion.span>
+              )}
+            </Link>
+
+            {user ? (
+              <div className="flex items-center gap-4">
+                <Link href="/orders" className="text-sm font-medium hover:text-primary transition-colors hidden sm:flex items-center gap-2">
+                  <Package className="w-4 h-4" /> طلباتي
+                </Link>
+                {user.role === 'admin' && (
+                  <Link href="/admin/dashboard" className="text-sm font-medium text-accent hover:text-primary transition-colors hidden sm:block">
+                    لوحة الإدارة
+                  </Link>
+                )}
+                <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-destructive transition-colors">
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <Link href="/login" className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-xl text-sm font-bold hover:bg-primary/20 hover:text-primary transition-colors">
+                <User className="w-4 h-4" /> دخول
+              </Link>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-7xl w-full mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        <motion.div
+          key={location}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {children}
+        </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-border/50 bg-background/50 py-8 text-center text-muted-foreground text-sm">
+        <p>© {new Date().getFullYear()} لكر للحلويات. جميع الحقوق محفوظة.</p>
+      </footer>
+    </div>
+  );
+}
