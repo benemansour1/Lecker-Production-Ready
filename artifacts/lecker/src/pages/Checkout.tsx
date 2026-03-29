@@ -61,7 +61,12 @@ export default function Checkout() {
           deliveryType: deliveryType as any,
           notes: data.notes,
           paymentMethod: data.paymentMethod as CreateOrderRequestPaymentMethod,
-          items: items.map(i => ({ productId: i.product.id, quantity: i.quantity }))
+          items: items.map(i => ({
+            productId: i.product.id,
+            quantity: i.quantity,
+            variantName: i.variant?.nameAr,
+            variantPrice: i.variant?.price,
+          }))
         }
       });
 

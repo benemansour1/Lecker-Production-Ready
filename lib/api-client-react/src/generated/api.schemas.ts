@@ -46,6 +46,11 @@ export interface AuthResponse {
   message: string;
 }
 
+export type ProductVariantsItem = {
+  nameAr: string;
+  price: number;
+};
+
 export interface Product {
   id: number;
   name: string;
@@ -56,6 +61,7 @@ export interface Product {
   imageUrl?: string | null;
   isActive: boolean;
   sortOrder: number;
+  variants?: ProductVariantsItem[] | null;
   createdAt: string;
 }
 

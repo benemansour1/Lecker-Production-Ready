@@ -32,14 +32,29 @@ router.post("/", async (req, res) => {
         return;
       }
 
-      const price = Number(product.price);
+      // Determine price: use variant price if variant is specified and valid
+      let price = Number(product.price);
+      let variantLabel = '';
+      if (item.variantName && item.variantPrice) {
+        const productVariants = (product.variants as Array<{ nameAr: string; price: number }> | null) ?? [];
+        const matchedVariant = productVariants.find(v => v.nameAr === item.variantName);
+        if (matchedVariant) {
+          price = matchedVariant.price;
+          variantLabel = matchedVariant.nameAr;
+        } else {
+          // Allow frontend-supplied price if no match (fallback)
+          price = Number(item.variantPrice);
+          variantLabel = item.variantName;
+        }
+      }
+
       const subtotal = price * item.quantity;
       total += subtotal;
 
       orderItems.push({
         productId: product.id,
         productName: product.name,
-        productNameAr: product.nameAr,
+        productNameAr: product.nameAr + (variantLabel ? ` — ${variantLabel}` : ''),
         quantity: item.quantity,
         price,
         subtotal,

@@ -473,6 +473,19 @@ components:
           type: boolean
         sortOrder:
           type: integer
+        variants:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              nameAr:
+                type: string
+              price:
+                type: number
+            required:
+              - nameAr
+              - price
         createdAt:
           type: string
           format: date-time

@@ -5,6 +5,7 @@
  * Lecker Candy Store API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductVariantsItem } from "./productVariantsItem";
 
 export interface Product {
   id: number;
@@ -16,5 +17,6 @@ export interface Product {
   imageUrl?: string | null;
   isActive: boolean;
   sortOrder: number;
+  variants?: ProductVariantsItem[] | null;
   createdAt: Date;
 }

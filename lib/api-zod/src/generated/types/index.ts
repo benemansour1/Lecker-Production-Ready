@@ -27,6 +27,7 @@ export * from "./orderItem";
 export * from "./orderPaymentMethod";
 export * from "./orderStatus";
 export * from "./product";
+export * from "./productVariantsItem";
 export * from "./revenueData";
 export * from "./revenueDataBreakdownItem";
 export * from "./sendOtpRequest";

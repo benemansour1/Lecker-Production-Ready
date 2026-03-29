@@ -79,6 +79,14 @@ export const GetProductsResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  variants: zod
+    .array(
+      zod.object({
+        nameAr: zod.string(),
+        price: zod.number(),
+      }),
+    )
+    .nullish(),
   createdAt: zod.coerce.date(),
 });
 export const GetProductsResponse = zod.array(GetProductsResponseItem);
@@ -96,6 +104,14 @@ export const AdminGetProductsResponseItem = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  variants: zod
+    .array(
+      zod.object({
+        nameAr: zod.string(),
+        price: zod.number(),
+      }),
+    )
+    .nullish(),
   createdAt: zod.coerce.date(),
 });
 export const AdminGetProductsResponse = zod.array(AdminGetProductsResponseItem);
@@ -142,6 +158,14 @@ export const UpdateProductResponse = zod.object({
   imageUrl: zod.string().nullish(),
   isActive: zod.boolean(),
   sortOrder: zod.number(),
+  variants: zod
+    .array(
+      zod.object({
+        nameAr: zod.string(),
+        price: zod.number(),
+      }),
+    )
+    .nullish(),
   createdAt: zod.coerce.date(),
 });
 

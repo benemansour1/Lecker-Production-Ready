@@ -25,34 +25,42 @@ export default function Cart() {
         ) : (
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2 space-y-4">
-              {items.map((item) => (
-                <Card key={item.product.id} className="p-4 flex sm:flex-row flex-col sm:items-center gap-4 bg-card/40 backdrop-blur-sm">
-                  {item.product.imageUrl ? (
-                    <img src={item.product.imageUrl} alt={item.product.nameAr} className="w-20 h-20 rounded-xl object-cover bg-secondary" />
-                  ) : (
-                    <div className="w-20 h-20 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0" />
-                  )}
-                  
-                  <div className="flex-1">
-                    <h3 className="font-bold text-lg">{item.product.nameAr}</h3>
-                    <p className="text-primary font-bold">{formatPrice(item.product.price)}</p>
-                  </div>
+              {items.map((item) => {
+                const price = item.variant ? item.variant.price : item.product.price;
+                return (
+                  <Card key={item.cartKey} className="p-4 flex sm:flex-row flex-col sm:items-center gap-4 bg-card/40 backdrop-blur-sm">
+                    {item.product.imageUrl ? (
+                      <img src={item.product.imageUrl} alt={item.product.nameAr} className="w-20 h-20 rounded-xl object-cover bg-secondary" />
+                    ) : (
+                      <div className="w-20 h-20 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 text-3xl">
+                        🍬
+                      </div>
+                    )}
+                    
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg">{item.product.nameAr}</h3>
+                      {item.variant && (
+                        <p className="text-sm text-muted-foreground">{item.variant.nameAr}</p>
+                      )}
+                      <p className="text-primary font-bold">{formatPrice(price)}</p>
+                    </div>
 
-                  <div className="flex items-center gap-4 bg-secondary/50 rounded-full px-2 py-1 border border-border">
-                    <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="p-1.5 hover:bg-background rounded-full transition-colors">
-                      <Minus className="w-4 h-4" />
+                    <div className="flex items-center gap-4 bg-secondary/50 rounded-full px-2 py-1 border border-border">
+                      <button onClick={() => updateQuantity(item.cartKey, item.quantity - 1)} className="p-1.5 hover:bg-background rounded-full transition-colors">
+                        <Minus className="w-4 h-4" />
+                      </button>
+                      <span className="w-6 text-center font-bold">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.cartKey, item.quantity + 1)} className="p-1.5 hover:bg-background rounded-full transition-colors text-primary">
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                    
+                    <button onClick={() => removeItem(item.cartKey)} className="p-2 text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-5 h-5" />
                     </button>
-                    <span className="w-6 text-center font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)} className="p-1.5 hover:bg-background rounded-full transition-colors text-primary">
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  <button onClick={() => removeItem(item.product.id)} className="p-2 text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
 
             <div className="md:col-span-1">
