@@ -5,6 +5,8 @@
   "scripts": {
     "preinstall": "node -e \"if (!/pnpm/.test(process.env.npm_config_user_agent||'')) { console.error('Please use pnpm instead of npm/yarn'); process.exit(1); }\"",
     "dev": "concurrently -n API,WEB -c cyan,magenta \"pnpm --filter @workspace/api-server run dev\" \"pnpm --filter @workspace/lecker run dev\"",
+    "setup": "pnpm --filter @workspace/db run setup",
+    "seed": "pnpm --filter @workspace/db run seed",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"

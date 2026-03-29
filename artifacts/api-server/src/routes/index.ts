@@ -4,7 +4,7 @@ import authRouter from "./auth";
 import productsRouter from "./products";
 import ordersRouter from "./orders";
 import adminRouter from "./admin";
-import { db, settingsTable } from "@workspace/db";
+import { db, isDbAvailable, settingsTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -16,6 +16,9 @@ router.use("/admin", adminRouter);
 
 // Public store status endpoint (no auth required)
 router.get("/settings", async (req, res) => {
+  if (!isDbAvailable) {
+    return res.json({ isOpen: true, deliveryEnabled: true });
+  }
   try {
     const rows = await db.select().from(settingsTable);
     const map: Record<string, string> = {};

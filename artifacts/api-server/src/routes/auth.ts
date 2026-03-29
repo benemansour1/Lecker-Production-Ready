@@ -1,9 +1,20 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
+import { db, isDbAvailable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import twilio from "twilio";
 
 const router: IRouter = Router();
+
+// Block auth routes when no DB is available
+router.use((req, res, next) => {
+  if (!isDbAvailable) {
+    res.status(503).json({
+      error: "تسجيل الدخول غير متاح — قاعدة البيانات غير متصلة. أضف DATABASE_URL في ملف .env",
+    });
+    return;
+  }
+  next();
+});
 
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();

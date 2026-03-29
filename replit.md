@@ -74,6 +74,10 @@ Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client insta
 
 Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
 
+- `pnpm --filter @workspace/db run seed` — inserts the 51 default products + settings (skips if already seeded)
+- `pnpm --filter @workspace/db run setup` — push schema + seed (one command for first-time setup)
+- `lib/db/src/seed-data.json` — source of truth for all 51 products (exported from production DB)
+
 ### `lib/api-spec` (`@workspace/api-spec`)
 
 Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:

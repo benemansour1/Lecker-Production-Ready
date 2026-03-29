@@ -1,0 +1,703 @@
+[
+  {
+    "id": 39,
+    "name": "Waffle",
+    "name_ar": "وافل عادي",
+    "category": "وافل",
+    "price": "34.00",
+    "description": null,
+    "image_url": "/products/waffle.jpg",
+    "is_active": true,
+    "sort_order": 10,
+    "variants": null
+  },
+  {
+    "id": 40,
+    "name": "Waffle Double",
+    "name_ar": "وافل كفول / طبقتين",
+    "category": "وافل",
+    "price": "80.00",
+    "description": null,
+    "image_url": "/products/waffle_double.jpg",
+    "is_active": true,
+    "sort_order": 11,
+    "variants": null
+  },
+  {
+    "id": 41,
+    "name": "Crepe Snickers",
+    "name_ar": "كريب سنيكرس",
+    "category": "كريب",
+    "price": "38.00",
+    "description": null,
+    "image_url": "/products/crepe_snicker.jpg",
+    "is_active": true,
+    "sort_order": 20,
+    "variants": null
+  },
+  {
+    "id": 42,
+    "name": "Crepe Kinder",
+    "name_ar": "كريب كندر",
+    "category": "كريب",
+    "price": "35.00",
+    "description": null,
+    "image_url": "/products/crepe_kinder.jpg",
+    "is_active": true,
+    "sort_order": 21,
+    "variants": null
+  },
+  {
+    "id": 43,
+    "name": "Crepe Nutella",
+    "name_ar": "كريب نوتيلا",
+    "category": "كريب",
+    "price": "30.00",
+    "description": null,
+    "image_url": "/products/crepe_nutella.jpg",
+    "is_active": true,
+    "sort_order": 22,
+    "variants": null
+  },
+  {
+    "id": 44,
+    "name": "Crepe Lotus",
+    "name_ar": "كريب لوتس",
+    "category": "كريب",
+    "price": "38.00",
+    "description": null,
+    "image_url": "/products/crepe_lotus.jpg",
+    "is_active": true,
+    "sort_order": 23,
+    "variants": null
+  },
+  {
+    "id": 45,
+    "name": "Pancake Mkoplet",
+    "name_ar": "بانكيك مكوبلت",
+    "category": "بانكيك",
+    "price": "38.00",
+    "description": null,
+    "image_url": "/products/pancake_mikopelet.jpg",
+    "is_active": true,
+    "sort_order": 30,
+    "variants": null
+  },
+  {
+    "id": 46,
+    "name": "Pancake Ferrero",
+    "name_ar": "بانكيك فيريرو",
+    "category": "بانكيك",
+    "price": "40.00",
+    "description": null,
+    "image_url": "/products/pancake_rocher.jpg",
+    "is_active": true,
+    "sort_order": 31,
+    "variants": null
+  },
+  {
+    "id": 47,
+    "name": "Pancake Nutella",
+    "name_ar": "بانكيك نوتيلا",
+    "category": "بانكيك",
+    "price": "35.00",
+    "description": null,
+    "image_url": "/products/pancake_nutella.jpg",
+    "is_active": true,
+    "sort_order": 32,
+    "variants": null
+  },
+  {
+    "id": 48,
+    "name": "Pancake Kinder",
+    "name_ar": "بانكيك كندر",
+    "category": "بانكيك",
+    "price": "40.00",
+    "description": null,
+    "image_url": "/products/pancake_kinder.jpg",
+    "is_active": true,
+    "sort_order": 33,
+    "variants": null
+  },
+  {
+    "id": 49,
+    "name": "Pancake Snickers",
+    "name_ar": "بانكيك سنيكرس",
+    "category": "بانكيك",
+    "price": "40.00",
+    "description": null,
+    "image_url": "/products/pancake_snicker.jpg",
+    "is_active": true,
+    "sort_order": 34,
+    "variants": null
+  },
+  {
+    "id": 50,
+    "name": "Pancake Lotus",
+    "name_ar": "بانكيك لوتس",
+    "category": "بانكيك",
+    "price": "40.00",
+    "description": null,
+    "image_url": "/products/pancake_lotus.jpg",
+    "is_active": true,
+    "sort_order": 35,
+    "variants": null
+  },
+  {
+    "id": 51,
+    "name": "Yogurt Ice Cream",
+    "name_ar": "بوظة يوجورت",
+    "category": "بوظة",
+    "price": "28.00",
+    "description": null,
+    "image_url": "/products/yogurt.png",
+    "is_active": true,
+    "sort_order": 40,
+    "variants": [
+      {
+        "nameAr": "صغير",
+        "price": 28
+      },
+      {
+        "nameAr": "كبير",
+        "price": 33
+      }
+    ]
+  },
+  {
+    "id": 52,
+    "name": "גלידה פיצוץ אוריו",
+    "name_ar": "גלידה פיצוץ אוריו",
+    "category": "بوظة",
+    "price": "19.00",
+    "description": null,
+    "image_url": "/products/pizuz.jpg",
+    "is_active": true,
+    "sort_order": 41,
+    "variants": [
+      {
+        "nameAr": "عادي - 19 ₪",
+        "price": 19
+      },
+      {
+        "nameAr": "مع توبينج إضافي - 23 ₪",
+        "price": 23
+      }
+    ]
+  },
+  {
+    "id": 53,
+    "name": "גלידה אמריקאית",
+    "name_ar": "גלידה אמריקאית",
+    "category": "بوظة",
+    "price": "23.00",
+    "description": null,
+    "image_url": "/products/gelida_american.jpg",
+    "is_active": true,
+    "sort_order": 42,
+    "variants": [
+      {
+        "nameAr": "קטן - 23 ₪",
+        "price": 23
+      },
+      {
+        "nameAr": "גדול - 28 ₪",
+        "price": 28
+      }
+    ]
+  },
+  {
+    "id": 54,
+    "name": "גלידה איטלקית",
+    "name_ar": "גלידה איטלקית",
+    "category": "بوظة",
+    "price": "15.00",
+    "description": null,
+    "image_url": "/products/gelida_italian.jpg",
+    "is_active": true,
+    "sort_order": 43,
+    "variants": [
+      {
+        "nameAr": "כדור אחד - 15 ₪",
+        "price": 15
+      },
+      {
+        "nameAr": "שני כדורים - 28 ₪",
+        "price": 28
+      },
+      {
+        "nameAr": "שלושה כדורים - 38 ₪",
+        "price": 38
+      }
+    ]
+  },
+  {
+    "id": 55,
+    "name": "Chips",
+    "name_ar": "فشافيش",
+    "category": "وافل",
+    "price": "30.00",
+    "description": null,
+    "image_url": "/products/fashafesh.jpg",
+    "is_active": true,
+    "sort_order": 50,
+    "variants": [
+      {
+        "nameAr": "صغير - 30 ₪",
+        "price": 30
+      },
+      {
+        "nameAr": "وسط - 45 ₪",
+        "price": 45
+      },
+      {
+        "nameAr": "كبير - 50 ₪",
+        "price": 50
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "name": "Cheese Toast",
+    "name_ar": "توست جبنة",
+    "category": "أكل",
+    "price": "38.00",
+    "description": null,
+    "image_url": "/products/toast.jpg",
+    "is_active": true,
+    "sort_order": 60,
+    "variants": null
+  },
+  {
+    "id": 57,
+    "name": "Bagel Toast",
+    "name_ar": "بيجلي توست",
+    "category": "أكل",
+    "price": "38.00",
+    "description": null,
+    "image_url": "/products/bagel_toast.jpg",
+    "is_active": true,
+    "sort_order": 61,
+    "variants": null
+  },
+  {
+    "id": 58,
+    "name": "Schnitzel & Chips",
+    "name_ar": "شنيتسل وشيبس",
+    "category": "أكل",
+    "price": "58.00",
+    "description": null,
+    "image_url": "/products/shnizel.jpg",
+    "is_active": true,
+    "sort_order": 62,
+    "variants": null
+  },
+  {
+    "id": 59,
+    "name": "Fries",
+    "name_ar": "بطاطا شيبس",
+    "category": "أكل",
+    "price": "18.00",
+    "description": null,
+    "image_url": "/products/chips.jpg",
+    "is_active": true,
+    "sort_order": 63,
+    "variants": [
+      {
+        "nameAr": "صغير - 18 ₪",
+        "price": 18
+      },
+      {
+        "nameAr": "كبير - 25 ₪",
+        "price": 25
+      }
+    ]
+  },
+  {
+    "id": 60,
+    "name": "Chicken Strips",
+    "name_ar": "نكنكيوت",
+    "category": "أكل",
+    "price": "25.00",
+    "description": null,
+    "image_url": "/products/hot_dog.jpg",
+    "is_active": true,
+    "sort_order": 64,
+    "variants": null
+  },
+  {
+    "id": 61,
+    "name": "Chicken Wrap",
+    "name_ar": "لفة مع جاج",
+    "category": "أكل",
+    "price": "45.00",
+    "description": null,
+    "image_url": "/products/tortia.jpg",
+    "is_active": true,
+    "sort_order": 65,
+    "variants": null
+  },
+  {
+    "id": 62,
+    "name": "כריך אנטריקוט טרי ללא שיפס",
+    "name_ar": "כריך אנטריקוט טרי ללא שיפס",
+    "category": "أكل",
+    "price": "49.00",
+    "description": null,
+    "image_url": "/products/antricot.jpg",
+    "is_active": true,
+    "sort_order": 66,
+    "variants": null
+  },
+  {
+    "id": 63,
+    "name": "Nespresso",
+    "name_ar": "نسبرسو",
+    "category": "مشروبات ساخنة",
+    "price": "15.00",
+    "description": null,
+    "image_url": "/products/nespresso.png",
+    "is_active": true,
+    "sort_order": 70,
+    "variants": [
+      {
+        "nameAr": "صغير - 15 ₪",
+        "price": 15
+      },
+      {
+        "nameAr": "كبير - 17 ₪",
+        "price": 17
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "name": "Hafuch",
+    "name_ar": "הפוך",
+    "category": "مشروبات ساخنة",
+    "price": "15.00",
+    "description": null,
+    "image_url": "/products/hafuch.png",
+    "is_active": true,
+    "sort_order": 71,
+    "variants": [
+      {
+        "nameAr": "صغير - 15 ₪",
+        "price": 15
+      },
+      {
+        "nameAr": "كبير - 17 ₪",
+        "price": 17
+      }
+    ]
+  },
+  {
+    "id": 65,
+    "name": "Espresso",
+    "name_ar": "اسبرسو",
+    "category": "مشروبات ساخنة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/espresso.jpg",
+    "is_active": true,
+    "sort_order": 72,
+    "variants": null
+  },
+  {
+    "id": 66,
+    "name": "Tea",
+    "name_ar": "شاي",
+    "category": "مشروبات ساخنة",
+    "price": "8.00",
+    "description": null,
+    "image_url": "/products/tea.png",
+    "is_active": true,
+    "sort_order": 73,
+    "variants": null
+  },
+  {
+    "id": 68,
+    "name": "Coca Cola",
+    "name_ar": "كولا عادي",
+    "category": "مشروبات باردة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/cola.webp",
+    "is_active": true,
+    "sort_order": 80,
+    "variants": null
+  },
+  {
+    "id": 69,
+    "name": "Coca Cola Zero",
+    "name_ar": "كولا زيرو",
+    "category": "مشروبات باردة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/cola_zero.png",
+    "is_active": true,
+    "sort_order": 81,
+    "variants": null
+  },
+  {
+    "id": 74,
+    "name": "XL Energy Drink",
+    "name_ar": "XL",
+    "category": "مشروبات باردة",
+    "price": "8.00",
+    "description": null,
+    "image_url": "/products/xl.gif",
+    "is_active": true,
+    "sort_order": 82,
+    "variants": null
+  },
+  {
+    "id": 79,
+    "name": "Blue Energy Drink",
+    "name_ar": "בלו",
+    "category": "مشروبات باردة",
+    "price": "8.00",
+    "description": null,
+    "image_url": "/products/blu.webp",
+    "is_active": true,
+    "sort_order": 83,
+    "variants": null
+  },
+  {
+    "id": 67,
+    "name": "Sprite",
+    "name_ar": "سبرايت",
+    "category": "مشروبات باردة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/sprite.png",
+    "is_active": true,
+    "sort_order": 84,
+    "variants": null
+  },
+  {
+    "id": 75,
+    "name": "Soda",
+    "name_ar": "סודה",
+    "category": "مشروبات باردة",
+    "price": "8.00",
+    "description": null,
+    "image_url": "/products/soda.webp",
+    "is_active": true,
+    "sort_order": 85,
+    "variants": null
+  },
+  {
+    "id": 70,
+    "name": "Water",
+    "name_ar": "مياه",
+    "category": "مشروبات باردة",
+    "price": "8.00",
+    "description": null,
+    "image_url": "/products/water.jpg",
+    "is_active": true,
+    "sort_order": 86,
+    "variants": null
+  },
+  {
+    "id": 76,
+    "name": "Orange Juice",
+    "name_ar": "תפוזים",
+    "category": "مشروبات باردة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/orange.webp",
+    "is_active": true,
+    "sort_order": 87,
+    "variants": null
+  },
+  {
+    "id": 72,
+    "name": "Strawberry Banana Juice",
+    "name_ar": "תות בננה",
+    "category": "مشروبات باردة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/strawberry_banana.jpg",
+    "is_active": true,
+    "sort_order": 88,
+    "variants": null
+  },
+  {
+    "id": 73,
+    "name": "Grape Juice",
+    "name_ar": "ענבים",
+    "category": "مشروبات باردة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/grape.png",
+    "is_active": true,
+    "sort_order": 89,
+    "variants": null
+  },
+  {
+    "id": 71,
+    "name": "Grapefruit Juice",
+    "name_ar": "אשכוליות",
+    "category": "مشروبات باردة",
+    "price": "9.00",
+    "description": null,
+    "image_url": "/products/grapefruit.png",
+    "is_active": true,
+    "sort_order": 90,
+    "variants": null
+  },
+  {
+    "id": 77,
+    "name": "Natural Orange Juice",
+    "name_ar": "تفاحيم طبيعي",
+    "category": "مشروبات باردة",
+    "price": "18.00",
+    "description": null,
+    "image_url": "/products/juice_orange_natural.jpg",
+    "is_active": true,
+    "sort_order": 91,
+    "variants": null
+  },
+  {
+    "id": 78,
+    "name": "Natural Pomegranate Juice",
+    "name_ar": "رمان طبيعي",
+    "category": "مشروبات باردة",
+    "price": "25.00",
+    "description": null,
+    "image_url": "/products/juice_rimon.jpg",
+    "is_active": true,
+    "sort_order": 92,
+    "variants": null
+  },
+  {
+    "id": 80,
+    "name": "Mixed Fruit Juice",
+    "name_ar": "ميكس فواكه",
+    "category": "مشروبات باردة",
+    "price": "25.00",
+    "description": null,
+    "image_url": "/products/juice_apple.jpg",
+    "is_active": true,
+    "sort_order": 93,
+    "variants": null
+  },
+  {
+    "id": 81,
+    "name": "Carrot Juice",
+    "name_ar": "גזר",
+    "category": "مشروبات باردة",
+    "price": "18.00",
+    "description": null,
+    "image_url": "/products/juice_carrot.jpg",
+    "is_active": true,
+    "sort_order": 94,
+    "variants": null
+  },
+  {
+    "id": 82,
+    "name": "Corona Beer",
+    "name_ar": "كورونا",
+    "category": "بيرا",
+    "price": "18.00",
+    "description": null,
+    "image_url": "/products/corona.jpg",
+    "is_active": true,
+    "sort_order": 100,
+    "variants": null
+  },
+  {
+    "id": 83,
+    "name": "Paulaner Beer",
+    "name_ar": "باولانير",
+    "category": "بيرا",
+    "price": "25.00",
+    "description": null,
+    "image_url": "/products/paulaner.jpg",
+    "is_active": true,
+    "sort_order": 101,
+    "variants": null
+  },
+  {
+    "id": 84,
+    "name": "Carlsberg Beer",
+    "name_ar": "جارسبلج",
+    "category": "بيرا",
+    "price": "18.00",
+    "description": null,
+    "image_url": "/products/carlsberg.jpg",
+    "is_active": true,
+    "sort_order": 102,
+    "variants": null
+  },
+  {
+    "id": 85,
+    "name": "Stella Beer",
+    "name_ar": "ستيلا",
+    "category": "بيرا",
+    "price": "18.00",
+    "description": null,
+    "image_url": "/products/stella.jpg",
+    "is_active": true,
+    "sort_order": 103,
+    "variants": null
+  },
+  {
+    "id": 86,
+    "name": "Weihenstephan Beer",
+    "name_ar": "فاينشتيفين",
+    "category": "بيرا",
+    "price": "25.00",
+    "description": null,
+    "image_url": "/products/weinst.jpg",
+    "is_active": true,
+    "sort_order": 104,
+    "variants": null
+  },
+  {
+    "id": 87,
+    "name": "Tuborg Beer",
+    "name_ar": "توبورج",
+    "category": "بيرا",
+    "price": "18.00",
+    "description": null,
+    "image_url": "/products/tuborg.jpg",
+    "is_active": true,
+    "sort_order": 105,
+    "variants": null
+  },
+  {
+    "id": 88,
+    "name": "Churros",
+    "name_ar": "צ'ורוס",
+    "category": "حلويات خاصة",
+    "price": "38.00",
+    "description": null,
+    "image_url": "/products/churros.jpg",
+    "is_active": true,
+    "sort_order": 110,
+    "variants": null
+  },
+  {
+    "id": 89,
+    "name": "Fondue",
+    "name_ar": "פונדו",
+    "category": "حلويات خاصة",
+    "price": "50.00",
+    "description": null,
+    "image_url": "/products/fondue.jpg",
+    "is_active": true,
+    "sort_order": 111,
+    "variants": [
+      {
+        "nameAr": "صغير - 50 ₪",
+        "price": 50
+      },
+      {
+        "nameAr": "كبير - 90 ₪",
+        "price": 90
+      }
+    ]
+  }
+]

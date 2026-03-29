@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { db, productsTable, ordersTable, settingsTable } from "@workspace/db";
+import { db, isDbAvailable, productsTable, ordersTable, settingsTable } from "@workspace/db";
 import { eq, asc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
 import { sendSms } from "../lib/sms";
@@ -7,6 +7,16 @@ import { sendSms } from "../lib/sms";
 const router: IRouter = Router();
 
 router.use(requireAdmin);
+
+router.use((req, res, next) => {
+  if (!isDbAvailable) {
+    res.status(503).json({
+      error: "لوحة التحكم غير متاحة — قاعدة البيانات غير متصلة. أضف DATABASE_URL في ملف .env",
+    });
+    return;
+  }
+  next();
+});
 
 // ─── Products ───────────────────────────────────────────────────────────────
 
