@@ -5,6 +5,7 @@
  * Lecker Candy Store API
  * OpenAPI spec version: 0.1.0
  */
+import type { OrderDeliveryType } from "./orderDeliveryType";
 import type { OrderItem } from "./orderItem";
 import type { OrderPaymentMethod } from "./orderPaymentMethod";
 import type { OrderStatus } from "./orderStatus";
@@ -19,6 +20,7 @@ export interface Order {
   items: OrderItem[];
   notes?: string | null;
   deliveryAddress?: string | null;
+  deliveryType?: OrderDeliveryType;
   paymentMethod: OrderPaymentMethod;
   createdAt: Date;
   updatedAt: Date;

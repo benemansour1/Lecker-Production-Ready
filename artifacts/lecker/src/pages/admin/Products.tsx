@@ -3,9 +3,10 @@ import { AdminLayout } from '@/components/layout/AdminLayout';
 import { useAdminGetProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, Product } from '@workspace/api-client-react';
 import { Card, Button, Input, Dialog } from '@/components/ui-elements';
 import { formatPrice } from '@/lib/utils';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Power } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 export default function AdminProducts() {
   const { data: products, refetch } = useAdminGetProducts();
@@ -15,8 +16,9 @@ export default function AdminProducts() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [togglingId, setTogglingId] = useState<number | null>(null);
 
-  const { register, handleSubmit, reset, setValue } = useForm();
+  const { register, handleSubmit, reset } = useForm();
 
   const openCreate = () => {
     setEditingProduct(null);
@@ -30,17 +32,39 @@ export default function AdminProducts() {
     setIsDialogOpen(true);
   };
 
+  const handleToggle = async (p: Product) => {
+    setTogglingId(p.id);
+    try {
+      // Use direct fetch for the toggle endpoint (not in generated client)
+      const BASE = import.meta.env.BASE_URL;
+      const resp = await fetch(`${BASE}api/admin/products/${p.id}/toggle`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+      if (!resp.ok) throw new Error();
+      toast({
+        title: p.isActive ? 'تم تعطيل المنتج' : 'تم تفعيل المنتج',
+        description: `${p.nameAr} ${p.isActive ? 'معطل الآن' : 'متاح الآن للعملاء'}`,
+      });
+      refetch();
+    } catch {
+      toast({ title: 'خطأ', description: 'فشل تغيير حالة المنتج', variant: 'destructive' });
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const onSubmit = async (data: any) => {
     try {
       const payload = {
-        name: data.nameAr || data.name, // Fallback if name is omitted in form
+        name: data.nameAr || data.name,
         nameAr: data.nameAr,
         category: data.category,
         price: Number(data.price),
         description: data.description,
         imageUrl: data.imageUrl,
-        isActive: data.isActive,
-        sortOrder: Number(data.sortOrder)
+        isActive: data.isActive === true || data.isActive === 'true',
+        sortOrder: Number(data.sortOrder || 0)
       };
 
       if (editingProduct) {
@@ -52,7 +76,7 @@ export default function AdminProducts() {
       }
       setIsDialogOpen(false);
       refetch();
-    } catch (err) {
+    } catch {
       toast({ title: 'خطأ', description: 'حدث خطأ أثناء الحفظ', variant: 'destructive' });
     }
   };
@@ -63,7 +87,7 @@ export default function AdminProducts() {
         await deleteProduct.mutateAsync({ id });
         toast({ title: 'تم الحذف' });
         refetch();
-      } catch (err) {
+      } catch {
         toast({ title: 'خطأ', variant: 'destructive' });
       }
     }
@@ -80,34 +104,61 @@ export default function AdminProducts() {
         <div className="overflow-x-auto">
           <table className="w-full text-right">
             <thead>
-              <tr className="bg-secondary/50 text-muted-foreground">
+              <tr className="bg-secondary/50 text-muted-foreground text-sm">
                 <th className="p-4 font-medium">المنتج</th>
                 <th className="p-4 font-medium">التصنيف</th>
                 <th className="p-4 font-medium">السعر</th>
-                <th className="p-4 font-medium">الحالة</th>
+                <th className="p-4 font-medium text-center">تفعيل/تعطيل</th>
                 <th className="p-4 font-medium text-center">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/50">
               {products?.map(p => (
-                <tr key={p.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="p-4 flex items-center gap-4">
-                    {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.nameAr} className="w-12 h-12 rounded-lg object-cover bg-secondary" />
-                    ) : <div className="w-12 h-12 rounded-lg bg-secondary" />}
-                    <span className="font-bold">{p.nameAr}</span>
-                  </td>
-                  <td className="p-4">{p.category}</td>
-                  <td className="p-4 font-bold text-primary">{formatPrice(p.price)}</td>
+                <tr key={p.id} className={cn(
+                  'transition-colors',
+                  p.isActive ? 'hover:bg-secondary/20' : 'bg-destructive/5 hover:bg-destructive/10 opacity-70'
+                )}>
                   <td className="p-4">
-                    <span className={`px-2 py-1 rounded text-xs ${p.isActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-destructive/20 text-destructive'}`}>
-                      {p.isActive ? 'نشط' : 'معطل'}
-                    </span>
+                    <div className="flex items-center gap-3">
+                      {p.imageUrl ? (
+                        <img src={p.imageUrl} alt={p.nameAr} className="w-12 h-12 rounded-xl object-cover bg-secondary flex-shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-secondary/50 flex-shrink-0 flex items-center justify-center text-xl">
+                          🍬
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-bold">{p.nameAr}</p>
+                        {!p.isActive && <p className="text-xs text-destructive">معطل</p>}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-4 text-muted-foreground">{p.category}</td>
+                  <td className="p-4 font-bold text-primary">{formatPrice(p.price)}</td>
+                  <td className="p-4 text-center">
+                    <button
+                      onClick={() => handleToggle(p)}
+                      disabled={togglingId === p.id}
+                      title={p.isActive ? 'تعطيل المنتج' : 'تفعيل المنتج'}
+                      className={cn(
+                        'p-2.5 rounded-xl transition-all font-medium text-sm border-2',
+                        p.isActive
+                          ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30'
+                          : 'bg-destructive/15 text-destructive border-destructive/30 hover:bg-destructive/30',
+                        togglingId === p.id && 'opacity-50 cursor-not-allowed'
+                      )}
+                    >
+                      <Power className="w-4 h-4" />
+                    </button>
                   </td>
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => openEdit(p)} className="p-2 text-primary hover:bg-primary/10 rounded-lg"><Edit2 className="w-4 h-4"/></button>
-                      <button onClick={() => handleDelete(p.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg"><Trash2 className="w-4 h-4"/></button>
+                      <button onClick={() => openEdit(p)} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                        <Edit2 className="w-4 h-4"/>
+                      </button>
+                      <button onClick={() => handleDelete(p.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                        <Trash2 className="w-4 h-4"/>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -117,9 +168,9 @@ export default function AdminProducts() {
         </div>
       </Card>
 
-      <Dialog 
-        isOpen={isDialogOpen} 
-        onClose={() => setIsDialogOpen(false)} 
+      <Dialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
         title={editingProduct ? 'تعديل منتج' : 'إضافة منتج جديد'}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -142,7 +193,7 @@ export default function AdminProducts() {
               <span>المنتج نشط ومتاح للطلب</span>
             </label>
           </div>
-          
+
           <div className="flex gap-4 pt-4 border-t border-border/50">
             <Button type="submit" className="flex-1" isLoading={createProduct.isPending || updateProduct.isPending}>حفظ</Button>
             <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)}>إلغاء</Button>

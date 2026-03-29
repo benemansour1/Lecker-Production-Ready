@@ -13,6 +13,7 @@ export const ordersTable = pgTable("orders", {
   items: json("items").notNull(),
   notes: text("notes"),
   deliveryAddress: text("delivery_address"),
+  deliveryType: text("delivery_type", { enum: ["delivery", "pickup"] }).default("delivery"),
   paymentMethod: text("payment_method", { enum: ["cash", "card", "online"] }).notNull().default("cash"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

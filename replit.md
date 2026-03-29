@@ -94,3 +94,44 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+---
+
+## Lecker – Arabic Candy Store App
+
+### Features Implemented
+
+**Customer Storefront (`artifacts/lecker/src/pages/`)**
+- RTL Arabic UI with `Tajawal` font only (no `Aref Ruqaa`), numbers in `en-IL` locale
+- Product browsing with emoji placeholder for products without images
+- Cart with toast notification on add (from `Home.tsx`)
+- Checkout (`Checkout.tsx`): delivery vs pickup toggle, +15 ILS delivery fee, address field, payment method (cash/online)
+- Login with OTP via `Login.tsx`; admin login at `/admin/login` via `AdminLogin.tsx`
+- My orders page (`Orders.tsx`)
+
+**Admin Dashboard (`artifacts/lecker/src/pages/admin/`)**
+- Dashboard with stats (today orders/revenue, pending orders, total products)
+- Orders (`Orders.tsx`): card-based view with full detail expand (items list, delivery type, address, notes, payment), status dropdown with sound alert (Web Audio API) when new orders arrive via 30s polling, status filter tabs
+- Products (`Products.tsx`): table with quick power-toggle button (green=active / red=disabled), edit/delete dialogs
+- Revenue pages (daily + monthly charts)
+- Settings page (store open/closed, delivery fee, min order, contact info)
+
+**Backend (`artifacts/api-server/src/routes/`)**
+- `auth.ts`: OTP login with Twilio SMS (falls back to console.log without env vars); admin guard checks `ADMIN_PHONE_NUMBER`
+- `orders.ts`: create order → validates stock, calculates total + 15 ILS delivery fee, notifies admin via SMS on new order
+- `admin.ts`: all CRUD for products/orders/settings; `PATCH /admin/products/:id/toggle` for quick enable/disable; sends SMS to customer on status change (preparing/ready/delivered/cancelled)
+- `lib/sms.ts`: shared SMS utility (Twilio if configured, otherwise console.log)
+
+**DB Schema (`lib/db/src/schema/`)**
+- `orders`: includes `deliveryType` (delivery/pickup), `deliveryAddress`, `items` (JSON), `paymentMethod`, `notes`
+- `products`: `isActive` for enable/disable toggle
+
+**Environment Variables Needed**
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` — Twilio SMS (optional; without these, OTP is shown in API response)
+- `ADMIN_PHONE_NUMBER` — phone to receive new-order SMS notifications
+- `SESSION_SECRET` — session signing key (already set)
+- `DATABASE_URL` — automatically provided by Replit
+
+**OpenAPI + Codegen**
+- After changing `lib/api-spec/openapi.yaml`, run: `pnpm --filter @workspace/api-spec run codegen`
+- After changing DB schema, run: `pnpm --filter @workspace/db run push` (or `push-force`)

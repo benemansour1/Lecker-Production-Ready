@@ -1,7 +1,8 @@
 import { Router, type IRouter } from "express";
 import { db, productsTable, ordersTable, settingsTable } from "@workspace/db";
-import { eq, asc, sql } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
+import { sendSms } from "../lib/sms";
 
 const router: IRouter = Router();
 
@@ -80,6 +81,29 @@ router.put("/products/:id", async (req, res) => {
   }
 });
 
+// Quick toggle product active status
+router.patch("/products/:id/toggle", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const products = await db.select().from(productsTable).where(eq(productsTable.id, id));
+    if (!products[0]) {
+      res.status(404).json({ error: "المنتج غير موجود" });
+      return;
+    }
+
+    const updated = await db.update(productsTable)
+      .set({ isActive: !products[0].isActive })
+      .where(eq(productsTable.id, id))
+      .returning();
+
+    const p = updated[0];
+    res.json({ ...p, price: Number(p.price), createdAt: p.createdAt.toISOString() });
+  } catch (err) {
+    req.log.error({ err }, "Error toggling product");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
+});
+
 router.delete("/products/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
@@ -128,14 +152,40 @@ router.put("/orders/:id/status", async (req, res) => {
       return;
     }
 
+    // Get the order to notify the customer
+    const orderRows = await db.select().from(ordersTable).where(eq(ordersTable.id, id));
+    const order = orderRows[0];
+
+    if (!order) {
+      res.status(404).json({ error: "الطلب غير موجود" });
+      return;
+    }
+
     const updated = await db.update(ordersTable).set({
       status,
       updatedAt: new Date(),
     }).where(eq(ordersTable.id, id)).returning();
 
-    if (!updated[0]) {
-      res.status(404).json({ error: "الطلب غير موجود" });
-      return;
+    // Notify customer via SMS on key status changes
+    if (order.customerPhone) {
+      let smsMsg: string | null = null;
+
+      if (status === "ready") {
+        smsMsg = `🎉 طلبك #${id} من لكر جاهز!\n` +
+          (order.deliveryType === "pickup"
+            ? "تفضل استلمه من المحل الآن 🏪"
+            : "سيصلك قريباً 🛵");
+      } else if (status === "delivered") {
+        smsMsg = `✅ تم تسليم طلبك #${id} بنجاح!\nشكراً لاختيارك لكر 🍬`;
+      } else if (status === "cancelled") {
+        smsMsg = `❌ عذراً، تم إلغاء طلبك #${id}.\nتواصل معنا لمزيد من المعلومات.`;
+      } else if (status === "preparing") {
+        smsMsg = `👨‍🍳 طلبك #${id} قيد التجهيز الآن!\nسيكون جاهزاً قريباً.`;
+      }
+
+      if (smsMsg) {
+        await sendSms(order.customerPhone, smsMsg);
+      }
     }
 
     const o = updated[0];
@@ -265,7 +315,7 @@ function parseSettings(rows: { key: string; value: string }[]) {
   return {
     isOpen: map["isOpen"] === "true",
     deliveryEnabled: map["deliveryEnabled"] === "true",
-    deliveryFee: Number(map["deliveryFee"] || 0),
+    deliveryFee: Number(map["deliveryFee"] || 15),
     minOrderAmount: Number(map["minOrderAmount"] || 0),
     storeName: map["storeName"] || "lecker",
     storePhone: map["storePhone"] || "",

@@ -170,6 +170,7 @@ export const CreateOrderBody = zod.object({
   ),
   notes: zod.string().optional(),
   deliveryAddress: zod.string().optional(),
+  deliveryType: zod.enum(["delivery", "pickup"]).optional(),
   paymentMethod: zod.enum(["cash", "card", "online"]),
 });
 
@@ -195,6 +196,7 @@ export const GetMyOrdersResponseItem = zod.object({
   ),
   notes: zod.string().nullish(),
   deliveryAddress: zod.string().nullish(),
+  deliveryType: zod.enum(["delivery", "pickup"]).nullish(),
   paymentMethod: zod.enum(["cash", "card", "online"]),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
@@ -229,6 +231,7 @@ export const AdminGetOrdersResponseItem = zod.object({
   ),
   notes: zod.string().nullish(),
   deliveryAddress: zod.string().nullish(),
+  deliveryType: zod.enum(["delivery", "pickup"]).nullish(),
   paymentMethod: zod.enum(["cash", "card", "online"]),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),
@@ -265,6 +268,7 @@ export const UpdateOrderStatusResponse = zod.object({
   ),
   notes: zod.string().nullish(),
   deliveryAddress: zod.string().nullish(),
+  deliveryType: zod.enum(["delivery", "pickup"]).nullish(),
   paymentMethod: zod.enum(["cash", "card", "online"]),
   createdAt: zod.coerce.date(),
   updatedAt: zod.coerce.date(),

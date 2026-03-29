@@ -5,6 +5,7 @@
  * Lecker Candy Store API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateOrderRequestDeliveryType } from "./createOrderRequestDeliveryType";
 import type { CreateOrderRequestItemsItem } from "./createOrderRequestItemsItem";
 import type { CreateOrderRequestPaymentMethod } from "./createOrderRequestPaymentMethod";
 
@@ -14,5 +15,6 @@ export interface CreateOrderRequest {
   items: CreateOrderRequestItemsItem[];
   notes?: string;
   deliveryAddress?: string;
+  deliveryType?: CreateOrderRequestDeliveryType;
   paymentMethod: CreateOrderRequestPaymentMethod;
 }

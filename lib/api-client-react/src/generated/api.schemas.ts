@@ -100,6 +100,15 @@ export const OrderStatus = {
   cancelled: "cancelled",
 } as const;
 
+export type OrderDeliveryType =
+  | (typeof OrderDeliveryType)[keyof typeof OrderDeliveryType]
+  | null;
+
+export const OrderDeliveryType = {
+  delivery: "delivery",
+  pickup: "pickup",
+} as const;
+
 export type OrderPaymentMethod =
   (typeof OrderPaymentMethod)[keyof typeof OrderPaymentMethod];
 
@@ -119,6 +128,7 @@ export interface Order {
   items: OrderItem[];
   notes?: string | null;
   deliveryAddress?: string | null;
+  deliveryType?: OrderDeliveryType;
   paymentMethod: OrderPaymentMethod;
   createdAt: string;
   updatedAt: string;
@@ -128,6 +138,14 @@ export type CreateOrderRequestItemsItem = {
   productId: number;
   quantity: number;
 };
+
+export type CreateOrderRequestDeliveryType =
+  (typeof CreateOrderRequestDeliveryType)[keyof typeof CreateOrderRequestDeliveryType];
+
+export const CreateOrderRequestDeliveryType = {
+  delivery: "delivery",
+  pickup: "pickup",
+} as const;
 
 export type CreateOrderRequestPaymentMethod =
   (typeof CreateOrderRequestPaymentMethod)[keyof typeof CreateOrderRequestPaymentMethod];
@@ -144,6 +162,7 @@ export interface CreateOrderRequest {
   items: CreateOrderRequestItemsItem[];
   notes?: string;
   deliveryAddress?: string;
+  deliveryType?: CreateOrderRequestDeliveryType;
   paymentMethod: CreateOrderRequestPaymentMethod;
 }
 

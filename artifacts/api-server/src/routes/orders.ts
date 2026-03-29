@@ -1,13 +1,14 @@
 import { Router, type IRouter } from "express";
 import { db, ordersTable, productsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
+import { sendSms, getAdminPhone } from "../lib/sms";
 
 const router: IRouter = Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { customerPhone, customerName, items, notes, deliveryAddress, paymentMethod } = req.body;
+    const { customerPhone, customerName, items, notes, deliveryAddress, deliveryType, paymentMethod } = req.body;
 
     if (!customerPhone || !items || !Array.isArray(items) || items.length === 0) {
       res.status(400).json({ error: "بيانات الطلب غير مكتملة" });
@@ -45,6 +46,10 @@ router.post("/", async (req, res) => {
       });
     }
 
+    // Add delivery fee if delivery type is delivery
+    const isDelivery = deliveryType === "delivery" || (!deliveryType && !!deliveryAddress);
+    if (isDelivery) total += 15;
+
     const userId = (req.session as any).userId;
 
     const inserted = await db.insert(ordersTable).values({
@@ -56,10 +61,29 @@ router.post("/", async (req, res) => {
       items: orderItems,
       notes: notes || null,
       deliveryAddress: deliveryAddress || null,
+      deliveryType: deliveryType || (deliveryAddress ? "delivery" : "pickup"),
       paymentMethod: paymentMethod || "cash",
     }).returning();
 
     const order = inserted[0];
+
+    // Notify admin via SMS
+    const adminPhone = getAdminPhone();
+    if (adminPhone) {
+      const itemsSummary = orderItems.map(i => `${i.productNameAr} x${i.quantity}`).join("، ");
+      const paymentLabel = paymentMethod === "cash" ? "كاش" : paymentMethod === "online" ? "إلكتروني" : "بطاقة";
+      const deliveryLabel = isDelivery ? `توصيل - ${deliveryAddress || ""}` : "استلام شخصي";
+      await sendSms(adminPhone,
+        `🔔 طلب جديد #${order.id}\n` +
+        `👤 ${customerName || ""} | ${customerPhone}\n` +
+        `🛍 ${itemsSummary}\n` +
+        `💰 المجموع: ${total} ₪ | ${paymentLabel}\n` +
+        `📍 ${deliveryLabel}`
+      );
+    }
+
+    req.log.info({ orderId: order.id }, "New order created");
+
     res.status(201).json({
       ...order,
       total: Number(order.total),
@@ -76,6 +100,8 @@ router.get("/my", requireAuth, async (req, res) => {
   try {
     const userId = (req.session as any).userId;
     const orders = await db.select().from(ordersTable).where(eq(ordersTable.userId, userId));
+
+    orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     res.json(orders.map(o => ({
       ...o,

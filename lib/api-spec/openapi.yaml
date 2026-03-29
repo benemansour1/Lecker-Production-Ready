@@ -582,6 +582,10 @@ components:
         deliveryAddress:
           type: string
           nullable: true
+        deliveryType:
+          type: string
+          enum: [delivery, pickup]
+          nullable: true
         paymentMethod:
           type: string
           enum: [cash, card, online]
@@ -624,6 +628,9 @@ components:
           type: string
         deliveryAddress:
           type: string
+        deliveryType:
+          type: string
+          enum: [delivery, pickup]
         paymentMethod:
           type: string
           enum: [cash, card, online]
