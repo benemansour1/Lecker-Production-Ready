@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { useLang } from '@/i18n';
 import { subscribeToProducts, getSettings, type Product } from '@/lib/firestore';
 
-const CATEGORIES_DB = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'أكل', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'حلويات خاصة'];
+const CATEGORIES_DB = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'مشروبات ساخنة', 'عصائر', 'مشروبات باردة', 'بيرا', 'أكل', 'حلويات خاصة'];
 
 const CATEGORY_EMOJI: Record<string, string> = {
   'بانكيك': '🥞',
@@ -20,10 +20,17 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'بوظة': '🍨',
   'أكل': '🍔',
   'مشروبات ساخنة': '☕',
-  'مشروبات باردة': '🧋',
+  'عصائر': '🍊',
+  'مشروبات باردة': '🥤',
   'بيرا': '🍺',
   'حلويات خاصة': '🍫',
 };
+
+function resolveImage(imageUrl: string | null | undefined): string | null {
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith('http')) return imageUrl;
+  return `${import.meta.env.BASE_URL}${imageUrl}`;
+}
 
 function getProductName(product: Product, lang: string): string {
   if (lang === 'he' && product.nameHe) return product.nameHe;
@@ -251,8 +258,8 @@ export default function Home() {
               >
                 <Card className="h-full flex flex-col group border-transparent hover:border-primary/50 transition-all duration-300 overflow-hidden">
                   <div className="relative aspect-square bg-secondary/50 overflow-hidden">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    {resolveImage(product.imageUrl) ? (
+                      <img src={resolveImage(product.imageUrl)!} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary/80 to-background/60">
                         <span className="text-5xl drop-shadow-lg select-none">

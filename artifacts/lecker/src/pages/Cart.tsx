@@ -7,6 +7,12 @@ import { Link } from 'wouter';
 import { Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
 import { useLang } from '@/i18n';
 
+function resolveImage(imageUrl: string | null | undefined): string | null {
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith('http')) return imageUrl;
+  return `${import.meta.env.BASE_URL}${imageUrl}`;
+}
+
 export default function Cart() {
   const { items, updateQuantity, removeItem, getCartTotal } = useCart();
   const { t, lang } = useLang();
@@ -37,8 +43,8 @@ export default function Cart() {
                 const displayName = getProductName(item.product);
                 return (
                   <Card key={item.cartKey} className="p-4 flex sm:flex-row flex-col sm:items-center gap-4 bg-card/40 backdrop-blur-sm">
-                    {item.product.imageUrl ? (
-                      <img src={item.product.imageUrl} alt={displayName} className="w-20 h-20 rounded-xl object-cover bg-secondary" />
+                    {resolveImage(item.product.imageUrl) ? (
+                      <img src={resolveImage(item.product.imageUrl)!} alt={displayName} className="w-20 h-20 rounded-xl object-cover bg-secondary" />
                     ) : (
                       <div className="w-20 h-20 rounded-xl bg-secondary flex items-center justify-center flex-shrink-0 text-3xl">
                         🍬
