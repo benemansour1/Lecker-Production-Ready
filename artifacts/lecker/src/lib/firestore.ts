@@ -144,6 +144,23 @@ export async function getProducts(category?: string): Promise<Product[]> {
   return products;
 }
 
+export function subscribeToProducts(
+  category: string | undefined,
+  callback: (products: Product[]) => void
+): () => void {
+  const col = collection(db, "products");
+  const q = query(col, orderBy("sortOrder", "asc"));
+  return onSnapshot(q, (snap) => {
+    let products = snap.docs
+      .map((d) => docToProduct({ id: d.id, ...d.data() }))
+      .filter((p) => p.isActive);
+    if (category && category !== "الكل") {
+      products = products.filter((p) => p.category === category);
+    }
+    callback(products);
+  });
+}
+
 export async function getAllProducts(): Promise<Product[]> {
   const col = collection(db, "products");
   const q = query(col, orderBy("sortOrder", "asc"));

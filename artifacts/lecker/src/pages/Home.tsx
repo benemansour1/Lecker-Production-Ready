@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { Button, Card } from '@/components/ui-elements';
@@ -9,7 +9,7 @@ import { Plus, ShoppingCart, X, MoonStar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useLang } from '@/i18n';
-import { getProducts, getSettings, type Product } from '@/lib/firestore';
+import { subscribeToProducts, getSettings, type Product } from '@/lib/firestore';
 
 const CATEGORIES_DB = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'أكل', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'حلويات خاصة'];
 
@@ -88,13 +88,18 @@ function VariantDialog({
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState('الكل');
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[] | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
   const { t, lang } = useLang();
 
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products', activeCategory],
-    queryFn: () => getProducts(activeCategory),
-    staleTime: 30000,
-  });
+  useEffect(() => {
+    setIsLoading(true);
+    const unsubscribe = subscribeToProducts(activeCategory, (data) => {
+      setProducts(data);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [activeCategory]);
 
   const { data: storeSettings } = useQuery({
     queryKey: ['store-settings'],
