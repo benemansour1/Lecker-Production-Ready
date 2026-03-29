@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { useCart } from '@/hooks/use-cart';
 import { Button, Input, Card } from '@/components/ui-elements';
 import { useCreateOrder } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,6 +31,23 @@ export default function Checkout() {
   const [, setLocation] = useLocation();
   const createOrder = useCreateOrder();
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
+
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/settings');
+      if (!res.ok) return { isOpen: true, deliveryEnabled: true };
+      return res.json() as Promise<{ isOpen: boolean; deliveryEnabled: boolean }>;
+    },
+    staleTime: 15000,
+  });
+
+  // If delivery gets disabled while on checkout, switch to pickup
+  useEffect(() => {
+    if (storeSettings && !storeSettings.deliveryEnabled && deliveryType === 'delivery') {
+      setDeliveryType('pickup');
+    }
+  }, [storeSettings, deliveryType]);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<CheckoutForm>({
     resolver: zodResolver(checkoutSchema),
@@ -96,21 +114,23 @@ export default function Checkout() {
                 <Truck className="text-primary w-5 h-5" /> طريقة الاستلام
               </h2>
               <div className="grid sm:grid-cols-2 gap-4">
-                <div
-                  onClick={() => setDeliveryType('delivery')}
-                  className={cn(
-                    'cursor-pointer border-2 rounded-2xl p-4 flex items-center gap-4 transition-all',
-                    deliveryType === 'delivery' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
-                  )}
-                >
-                  <div className={cn('p-3 rounded-xl', deliveryType === 'delivery' ? 'bg-primary text-primary-foreground' : 'bg-secondary')}>
-                    <Truck className="w-6 h-6" />
+                {storeSettings?.deliveryEnabled !== false && (
+                  <div
+                    onClick={() => setDeliveryType('delivery')}
+                    className={cn(
+                      'cursor-pointer border-2 rounded-2xl p-4 flex items-center gap-4 transition-all',
+                      deliveryType === 'delivery' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'
+                    )}
+                  >
+                    <div className={cn('p-3 rounded-xl', deliveryType === 'delivery' ? 'bg-primary text-primary-foreground' : 'bg-secondary')}>
+                      <Truck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-bold">توصيل للمنزل</p>
+                      <p className="text-sm text-muted-foreground">رسوم التوصيل {formatPrice(DELIVERY_FEE)}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold">توصيل للمنزل</p>
-                    <p className="text-sm text-muted-foreground">رسوم التوصيل {formatPrice(DELIVERY_FEE)}</p>
-                  </div>
-                </div>
+                )}
 
                 <div
                   onClick={() => setDeliveryType('pickup')}

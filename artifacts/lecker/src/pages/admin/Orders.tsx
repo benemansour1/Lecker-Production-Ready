@@ -43,12 +43,27 @@ function playOrderSound() {
   } catch {}
 }
 
+function showBrowserNotification(count: number) {
+  try {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+    new Notification('🔔 طلب جديد في ليكير!', {
+      body: `وصل ${count} طلب${count > 1 ? 'ات' : ''} جديد${count > 1 ? 'ة' : ''} — افتح لوحة الطلبات`,
+      icon: '/images/lecker-logo.png',
+      tag: 'new-order',
+      renotify: true,
+    });
+  } catch {}
+}
+
 export default function AdminOrders() {
   const { data: orders, refetch } = useAdminGetOrders();
   const updateStatus = useUpdateOrderStatus();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const prevCountRef = useRef<number | null>(null);
   const soundEnabledRef = useRef(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | 'unsupported'>(
+    typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
+  );
 
   // Enable sound on first click anywhere
   useEffect(() => {
@@ -57,6 +72,12 @@ export default function AdminOrders() {
     return () => window.removeEventListener('click', enable);
   }, []);
 
+  const requestNotifications = async () => {
+    if (typeof Notification === 'undefined') return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+  };
+
   // Poll for new orders every 30 seconds and play sound on new order
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -64,6 +85,7 @@ export default function AdminOrders() {
       const newCount = result.data?.filter(o => o.status === 'new').length ?? 0;
       if (prevCountRef.current !== null && newCount > prevCountRef.current) {
         if (soundEnabledRef.current) playOrderSound();
+        showBrowserNotification(newCount);
         toast({
           title: '🔔 طلب جديد وصل!',
           description: `لديك ${newCount} طلبات جديدة بانتظار المعالجة`,
@@ -101,6 +123,37 @@ export default function AdminOrders() {
 
   return (
     <AdminLayout>
+      {/* Notification Permission Banner */}
+      {notifPermission === 'default' && (
+        <div className="mb-6 flex items-center justify-between gap-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🔔</span>
+            <div>
+              <p className="font-bold text-amber-400">تفعيل إشعارات الطلبات</p>
+              <p className="text-sm text-muted-foreground">اسمح بالإشعارات لتلقي تنبيه فوري عند وصول طلب جديد</p>
+            </div>
+          </div>
+          <button
+            onClick={requestNotifications}
+            className="shrink-0 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-background text-sm font-bold rounded-xl transition-colors"
+          >
+            تفعيل الآن
+          </button>
+        </div>
+      )}
+      {notifPermission === 'granted' && (
+        <div className="mb-6 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-4 py-3">
+          <span className="text-lg">✅</span>
+          <p className="text-sm text-emerald-400 font-medium">الإشعارات مفعّلة — ستتلقى تنبيهاً عند كل طلب جديد</p>
+        </div>
+      )}
+      {notifPermission === 'denied' && (
+        <div className="mb-6 flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-2xl px-4 py-3">
+          <span className="text-lg">🚫</span>
+          <p className="text-sm text-destructive font-medium">الإشعارات محظورة — فعّلها يدوياً من إعدادات المتصفح</p>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gold-gradient">إدارة الطلبات</h1>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useGetProducts, Product } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { Button, Card } from '@/components/ui-elements';
 import { useCart, ProductVariant } from '@/hooks/use-cart';
 import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/utils';
-import { Plus, ShoppingCart, X } from 'lucide-react';
+import { Plus, ShoppingCart, X, MoonStar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -84,10 +85,25 @@ export default function Home() {
     activeCategory === 'الكل' ? {} : { category: activeCategory }
   );
 
+  const { data: storeSettings } = useQuery({
+    queryKey: ['store-settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/settings');
+      if (!res.ok) return { isOpen: true, deliveryEnabled: true };
+      return res.json() as Promise<{ isOpen: boolean; deliveryEnabled: boolean }>;
+    },
+    refetchInterval: 30000,
+    staleTime: 15000,
+  });
+
   const { addItem } = useCart();
   const { toast } = useToast();
 
   const handleAddToCart = (product: Product) => {
+    if (storeSettings && !storeSettings.isOpen) {
+      toast({ title: '🔒 المتجر مغلق', description: 'عذراً، المتجر غير متاح حالياً', variant: 'destructive', duration: 3000 });
+      return;
+    }
     const variants = (product.variants as ProductVariant[] | null) ?? [];
     if (variants.length > 0) {
       setVariantProduct(product);
@@ -108,8 +124,36 @@ export default function Home() {
     setVariantProduct(null);
   };
 
+  const isClosed = storeSettings && !storeSettings.isOpen;
+
   return (
     <CustomerLayout>
+      {/* Store Closed Overlay */}
+      <AnimatePresence>
+        {isClosed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', damping: 20 }}
+              className="text-center px-8 py-12 max-w-sm"
+            >
+              <div className="w-24 h-24 mx-auto mb-6 bg-secondary rounded-full flex items-center justify-center border border-border">
+                <MoonStar className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <h2 className="text-3xl font-bold mb-3">المتجر مغلق</h2>
+              <p className="text-muted-foreground text-lg">عذراً، المتجر غير متاح حالياً.</p>
+              <p className="text-muted-foreground text-sm mt-2">سنعود قريباً إن شاء الله ✨</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Variant Selector Dialog */}
       {variantProduct && (
         <VariantDialog
