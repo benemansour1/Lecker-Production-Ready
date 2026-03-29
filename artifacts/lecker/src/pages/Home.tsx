@@ -60,9 +60,15 @@ export default function Home() {
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="text-lg sm:text-xl text-muted-foreground"
+              className="text-lg sm:text-xl text-muted-foreground mb-2"
             >
               اكتشف تشكيلتنا الفاخرة من الحلويات المصنوعة بحب وعناية فائقة.
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="text-base sm:text-lg text-primary/80 font-medium"
+            >
+              🍬 كريب، بانكيك، وافل وبوظة — كل يوم طعم جديد ينتظرك
             </motion.p>
           </div>
         </div>
