@@ -16,21 +16,22 @@ export default defineConfig({
     react(),
     tailwindcss(),
     ...(isReplit
-      ? [
-          (await import("@replit/vite-plugin-runtime-error-modal")).default(),
-          ...(!isProduction
-            ? [
-                await import("@replit/vite-plugin-cartographer").then((m) =>
-                  m.cartographer({
-                    root: path.resolve(import.meta.dirname, ".."),
-                  }),
-                ),
-                await import("@replit/vite-plugin-dev-banner").then((m) =>
-                  m.devBanner(),
-                ),
-              ]
-            : []),
-        ]
+      ? await (async () => {
+          try {
+            const plugins = [];
+            const errorModal = await import("@replit/vite-plugin-runtime-error-modal").catch(() => null);
+            if (errorModal) plugins.push(errorModal.default());
+            if (!isProduction) {
+              const cartographer = await import("@replit/vite-plugin-cartographer").catch(() => null);
+              if (cartographer) plugins.push(cartographer.cartographer({ root: path.resolve(import.meta.dirname, "..") }));
+              const devBanner = await import("@replit/vite-plugin-dev-banner").catch(() => null);
+              if (devBanner) plugins.push(devBanner.devBanner());
+            }
+            return plugins;
+          } catch {
+            return [];
+          }
+        })()
       : []),
   ],
   resolve: {

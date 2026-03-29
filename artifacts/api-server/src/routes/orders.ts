@@ -1,20 +1,10 @@
 import { Router, type IRouter } from "express";
-import { db, isDbAvailable, ordersTable, productsTable } from "@workspace/db";
+import { db, ordersTable, productsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { requireAuth } from "../middlewares/auth";
 import { sendSms, getAdminPhone } from "../lib/sms";
 
 const router: IRouter = Router();
-
-router.use((req, res, next) => {
-  if (!isDbAvailable) {
-    res.status(503).json({
-      error: "الطلبات غير متاحة — قاعدة البيانات غير متصلة. أضف DATABASE_URL في ملف .env",
-    });
-    return;
-  }
-  next();
-});
 
 router.post("/", async (req, res) => {
   try {
