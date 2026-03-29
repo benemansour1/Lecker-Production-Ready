@@ -16,7 +16,6 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { MOCK_PRODUCTS } from "./mock-products";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -133,40 +132,23 @@ function docToOrder(d: DocumentData & { id: string }): Order {
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export async function getProducts(category?: string): Promise<Product[]> {
-  try {
-    const col = collection(db, "products");
-    const q = query(col, orderBy("sortOrder", "asc"));
-    const snap = await getDocs(q);
-    let products = snap.docs
-      .map((d) => docToProduct({ id: d.id, ...d.data() }))
-      .filter((p) => p.isActive);
-    if (products.length === 0) {
-      products = MOCK_PRODUCTS.filter((p) => p.isActive);
-    }
-    if (category && category !== "الكل") {
-      return products.filter((p) => p.category === category);
-    }
-    return products;
-  } catch {
-    const products = MOCK_PRODUCTS.filter((p) => p.isActive);
-    if (category && category !== "الكل") {
-      return products.filter((p) => p.category === category);
-    }
-    return products;
+  const col = collection(db, "products");
+  const q = query(col, orderBy("sortOrder", "asc"));
+  const snap = await getDocs(q);
+  let products = snap.docs
+    .map((d) => docToProduct({ id: d.id, ...d.data() }))
+    .filter((p) => p.isActive);
+  if (category && category !== "الكل") {
+    return products.filter((p) => p.category === category);
   }
+  return products;
 }
 
 export async function getAllProducts(): Promise<Product[]> {
-  try {
-    const col = collection(db, "products");
-    const q = query(col, orderBy("sortOrder", "asc"));
-    const snap = await getDocs(q);
-    const products = snap.docs.map((d) => docToProduct({ id: d.id, ...d.data() }));
-    if (products.length === 0) return [...MOCK_PRODUCTS];
-    return products;
-  } catch {
-    return [...MOCK_PRODUCTS];
-  }
+  const col = collection(db, "products");
+  const q = query(col, orderBy("sortOrder", "asc"));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => docToProduct({ id: d.id, ...d.data() }));
 }
 
 export async function createProduct(data: Omit<Product, "id" | "createdAt">): Promise<Product> {
@@ -214,7 +196,6 @@ export async function createOrder(data: {
   paymentMethod: "cash" | "card" | "online";
   userId?: string | null;
 }): Promise<Order> {
-  // Validate and build order items from Firestore
   const products = await Promise.all(
     data.items.map(async (item) => {
       const ref = doc(db, "products", item.productId);
@@ -267,7 +248,6 @@ export async function createOrder(data: {
   const col = collection(db, "orders");
   const ref = await addDoc(col, orderData);
 
-  // Notify admin via API (SMS)
   try {
     const BASE = (window as any).__viteBasePath__ || "/";
     const itemsSummary = orderItems.map((i) => `${i.productNameAr} x${i.quantity}`).join("، ");
@@ -333,7 +313,6 @@ export async function updateOrderStatus(id: string, status: Order["status"]): Pr
   const ref = doc(db, "orders", id);
   await updateDoc(ref, { status, updatedAt: serverTimestamp() });
 
-  // Notify customer via API (SMS)
   try {
     const snap = await getDoc(ref);
     const order = docToOrder({ id, ...snap.data() });
@@ -389,7 +368,6 @@ export async function sendOtp(phone: string): Promise<{ otp: string; fromServer:
   const otp = generateOtp();
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-  // Store OTP in Firestore
   const usersCol = collection(db, "users");
   const q = query(usersCol, where("phone", "==", phone));
   const snap = await getDocs(q);
@@ -406,7 +384,6 @@ export async function sendOtp(phone: string): Promise<{ otp: string; fromServer:
     await updateDoc(snap.docs[0].ref, { otpCode: otp, otpExpiresAt: expiresAt });
   }
 
-  // Try to send via API (SMS)
   try {
     const BASE = (window as any).__viteBasePath__ || "/";
     const resp = await fetch(`${BASE}api/send-sms`, {
