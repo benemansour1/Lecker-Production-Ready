@@ -7,7 +7,7 @@ import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
 import { UpdateOrderStatusRequestStatus } from '@workspace/api-client-react';
-import { Package, Phone, MapPin, CreditCard, Clock, ChevronDown, ChevronUp, Truck, Store } from 'lucide-react';
+import { Package, Phone, MapPin, CreditCard, Clock, Truck, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const STATUS_OPTIONS = [
@@ -46,7 +46,6 @@ function playOrderSound() {
 export default function AdminOrders() {
   const { data: orders, refetch } = useAdminGetOrders();
   const updateStatus = useUpdateOrderStatus();
-  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const prevCountRef = useRef<number | null>(null);
   const soundEnabledRef = useRef(false);
@@ -138,7 +137,6 @@ export default function AdminOrders() {
         <div className="space-y-4">
           {filtered.map(order => {
             const statusObj = STATUS_OPTIONS.find(s => s.value === order.status);
-            const isExpanded = expandedId === order.id;
             const items = (order.items as any[]) || [];
             const isDelivery = (order as any).deliveryType === 'delivery' || !!(order as any).deliveryAddress;
 
@@ -203,19 +201,10 @@ export default function AdminOrders() {
                     <div className="font-bold text-primary text-base mr-auto">{formatPrice(order.total)}</div>
                   </div>
 
-                  {/* Expand button */}
-                  <button
-                    onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                    className="mt-3 text-xs text-primary hover:underline flex items-center gap-1"
-                  >
-                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    {isExpanded ? 'إخفاء التفاصيل' : 'عرض تفاصيل الطلب'}
-                  </button>
                 </div>
 
-                {/* Expanded Details */}
-                {isExpanded && (
-                  <div className="border-t border-border/50 bg-secondary/20 p-4 sm:p-5 space-y-4">
+                {/* Order Details - always visible */}
+                <div className="border-t border-border/50 bg-secondary/20 p-4 sm:p-5 space-y-4">
                     {/* Items */}
                     <div>
                       <h3 className="font-bold mb-3 text-sm text-muted-foreground">🛍 المنتجات المطلوبة</h3>
@@ -270,8 +259,7 @@ export default function AdminOrders() {
                         </div>
                       </div>
                     )}
-                  </div>
-                )}
+                </div>
               </Card>
             );
           })}

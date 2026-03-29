@@ -6,12 +6,12 @@ import { useGetMe, useLogout } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { name: 'لوحة القيادة', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'الطلبات', href: '/admin/orders', icon: ShoppingBag },
-  { name: 'المنتجات', href: '/admin/products', icon: PackageOpen },
-  { name: 'الإيرادات اليومية', href: '/admin/revenue/daily', icon: CalendarDays },
-  { name: 'الإيرادات الشهرية', href: '/admin/revenue/monthly', icon: BarChart3 },
-  { name: 'الإعدادات', href: '/admin/settings', icon: Settings },
+  { name: 'لوحة القيادة', href: '/manage/dashboard', icon: LayoutDashboard },
+  { name: 'الطلبات', href: '/manage/orders', icon: ShoppingBag },
+  { name: 'المنتجات', href: '/manage/products', icon: PackageOpen },
+  { name: 'الإيرادات اليومية', href: '/manage/revenue/daily', icon: CalendarDays },
+  { name: 'الإيرادات الشهرية', href: '/manage/revenue/monthly', icon: BarChart3 },
+  { name: 'الإعدادات', href: '/manage/settings', icon: Settings },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -22,7 +22,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   // Guard
   React.useEffect(() => {
     if (!isLoading && (!user || user.role !== 'admin')) {
-      setLocation('/admin/login');
+      setLocation('/manage/login');
     }
   }, [user, isLoading, setLocation]);
 

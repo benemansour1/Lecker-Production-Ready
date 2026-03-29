@@ -31,15 +31,15 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/orders" component={Orders} />
       
-      {/* Admin Routes */}
-      <Route path="/admin" component={AdminLogin} />
-      <Route path="/admin/login" component={AdminLogin} />
-      <Route path="/admin/dashboard" component={AdminDashboard} />
-      <Route path="/admin/orders" component={AdminOrders} />
-      <Route path="/admin/products" component={AdminProducts} />
-      <Route path="/admin/revenue/daily" component={AdminRevenueDaily} />
-      <Route path="/admin/revenue/monthly" component={AdminRevenueMonthly} />
-      <Route path="/admin/settings" component={AdminSettings} />
+      {/* Admin Routes - secret path */}
+      <Route path="/manage" component={AdminLogin} />
+      <Route path="/manage/login" component={AdminLogin} />
+      <Route path="/manage/dashboard" component={AdminDashboard} />
+      <Route path="/manage/orders" component={AdminOrders} />
+      <Route path="/manage/products" component={AdminProducts} />
+      <Route path="/manage/revenue/daily" component={AdminRevenueDaily} />
+      <Route path="/manage/revenue/monthly" component={AdminRevenueMonthly} />
+      <Route path="/manage/settings" component={AdminSettings} />
       
       {/* 404 */}
       <Route component={NotFound} />

@@ -18,7 +18,7 @@ export default function Login() {
   // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
-      if (user.role === 'admin') setLocation('/admin/dashboard');
+      if (user.role === 'admin') setLocation('/manage/dashboard');
       else setLocation('/');
     }
   }, [user, setLocation]);

@@ -45,7 +45,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
                   <Package className="w-4 h-4" /> طلباتي
                 </Link>
                 {user.role === 'admin' && (
-                  <Link href="/admin/dashboard" className="text-sm font-medium text-accent hover:text-primary transition-colors hidden sm:block">
+                  <Link href="/manage/dashboard" className="text-sm font-medium text-accent hover:text-primary transition-colors hidden sm:block">
                     لوحة الإدارة
                   </Link>
                 )}

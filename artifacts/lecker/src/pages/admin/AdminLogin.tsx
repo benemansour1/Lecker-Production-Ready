@@ -22,7 +22,7 @@ export default function AdminLogin() {
 
   React.useEffect(() => {
     if (!isLoading && user && user.role === 'admin') {
-      setLocation('/admin/dashboard');
+      setLocation('/manage/dashboard');
     }
   }, [user, isLoading, setLocation]);
 
@@ -69,7 +69,7 @@ export default function AdminLogin() {
         setOtp('');
         return;
       }
-      setLocation('/admin/dashboard');
+      setLocation('/manage/dashboard');
     } catch {
       toast({ title: 'خطأ', description: 'رمز التحقق غير صحيح', variant: 'destructive' });
     }
