@@ -62,13 +62,13 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-lg sm:text-xl text-muted-foreground mb-2"
             >
-              اكتشف تشكيلتنا الفاخرة من الحلويات المصنوعة بحب وعناية فائقة.
+              من يد الشيف مباشرةً لقلبك، بأجود المكونات الطازجة 🍫
             </motion.p>
             <motion.p
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="text-base sm:text-lg text-primary/80 font-medium"
+              className="text-sm sm:text-base text-primary/70 font-medium tracking-wide"
             >
-              🍬 كريب، بانكيك، وافل وبوظة — كل يوم طعم جديد ينتظرك
+              بانكيك &nbsp;•&nbsp; كريب &nbsp;•&nbsp; وافل &nbsp;•&nbsp; بوظة &nbsp;•&nbsp; حلويات خاصة
             </motion.p>
           </div>
         </div>
