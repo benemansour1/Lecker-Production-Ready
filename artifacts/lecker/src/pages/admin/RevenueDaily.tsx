@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useGetDailyRevenue } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui-elements';
 import { formatPrice } from '@/lib/utils';
 import { format } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { getDailyRevenue } from '@/lib/firestore';
 
 export default function AdminRevenueDaily() {
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const { data: revenue, isLoading } = useGetDailyRevenue({ date });
+
+  const { data: revenue, isLoading } = useQuery({
+    queryKey: ['daily-revenue', date],
+    queryFn: () => getDailyRevenue(new Date(date)),
+  });
 
   return (
     <AdminLayout>
@@ -17,9 +22,9 @@ export default function AdminRevenueDaily() {
           <h1 className="text-3xl font-bold text-gold-gradient">الإيرادات اليومية</h1>
           <p className="text-muted-foreground mt-1">تحليل مبيعات يوم محدد</p>
         </div>
-        <input 
-          type="date" 
-          value={date} 
+        <input
+          type="date"
+          value={date}
           onChange={e => setDate(e.target.value)}
           className="bg-input border-2 border-border rounded-xl px-4 py-2 focus:border-primary outline-none"
         />
@@ -41,15 +46,15 @@ export default function AdminRevenueDaily() {
           </div>
 
           <Card className="p-6 h-[400px]">
-            <h3 className="text-xl font-bold mb-6">المبيعات حسب التصنيف</h3>
-            {revenue.breakdown.length > 0 ? (
+            <h3 className="text-xl font-bold mb-6">المبيعات بالساعة</h3>
+            {revenue.breakdown.some(b => b.orders > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenue.breakdown} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff1a" vertical={false} />
-                  <XAxis dataKey="label" stroke="#a1a1aa" tick={{fill: '#a1a1aa'}} />
-                  <YAxis stroke="#a1a1aa" tick={{fill: '#a1a1aa'}} />
-                  <Tooltip 
-                    cursor={{fill: '#ffffff0a'}}
+                  <XAxis dataKey="label" stroke="#a1a1aa" tick={{ fill: '#a1a1aa' }} />
+                  <YAxis stroke="#a1a1aa" tick={{ fill: '#a1a1aa' }} />
+                  <Tooltip
+                    cursor={{ fill: '#ffffff0a' }}
                     contentStyle={{ backgroundColor: '#1a0a00', border: '1px solid #4a2c11', borderRadius: '12px', color: '#fdf6e3' }}
                   />
                   <Bar dataKey="revenue" fill="#d4af37" radius={[4, 4, 0, 0]} name="الإيرادات (₪)" />

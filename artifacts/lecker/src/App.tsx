@@ -4,10 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
-// i18n
 import { LanguageProvider } from "@/i18n";
+import { AuthProvider } from "@/lib/auth-context";
 
-// Pages
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -27,14 +26,12 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
-      {/* Customer Routes */}
       <Route path="/" component={Home} />
       <Route path="/cart" component={Cart} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/login" component={Login} />
       <Route path="/orders" component={Orders} />
 
-      {/* Admin Routes - secret path */}
       <Route path="/manage" component={AdminLogin} />
       <Route path="/manage/login" component={AdminLogin} />
       <Route path="/manage/dashboard" component={AdminDashboard} />
@@ -45,7 +42,6 @@ function Router() {
       <Route path="/manage/settings" component={AdminSettings} />
       <Route path="/manage/sessions" component={AdminSessions} />
 
-      {/* 404 */}
       <Route component={NotFound} />
     </Switch>
   );
@@ -54,14 +50,16 @@ function Router() {
 function App() {
   return (
     <LanguageProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
+      <AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </AuthProvider>
     </LanguageProvider>
   );
 }

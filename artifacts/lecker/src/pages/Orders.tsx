@@ -1,15 +1,27 @@
 import React from 'react';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
-import { useGetMyOrders } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui-elements';
 import { formatPrice } from '@/lib/utils';
 import { format } from 'date-fns';
-import { Package, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Package, Clock, CheckCircle2, XCircle, LogIn } from 'lucide-react';
 import { useLang } from '@/i18n';
+import { getMyOrders } from '@/lib/firestore';
+import { useAuth } from '@/lib/auth-context';
+import { useLocation } from 'wouter';
 
 export default function Orders() {
-  const { data: orders, isLoading } = useGetMyOrders();
+  const { user } = useAuth();
   const { t } = useLang();
+  const [, setLocation] = useLocation();
+
+  const { data: orders, isLoading } = useQuery({
+    queryKey: ['my-orders', user?.id],
+    queryFn: () => user ? getMyOrders(user.id) : Promise.resolve([]),
+    enabled: !!user,
+    staleTime: 15000,
+    refetchInterval: 30000,
+  });
 
   const STATUS_MAP: Record<string, { label: string; color: string; icon: any }> = {
     new: { label: t.orders.status.new, color: 'text-blue-400 bg-blue-400/10', icon: Clock },
@@ -18,6 +30,24 @@ export default function Orders() {
     delivered: { label: t.orders.status.delivered, color: 'text-emerald-400 bg-emerald-400/10', icon: CheckCircle2 },
     cancelled: { label: t.orders.status.cancelled, color: 'text-destructive bg-destructive/10', icon: XCircle },
   };
+
+  if (!user) {
+    return (
+      <CustomerLayout>
+        <div className="text-center py-20">
+          <LogIn className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+          <h2 className="text-2xl font-bold mb-2">{t.orders.loginRequired || 'يجب تسجيل الدخول'}</h2>
+          <p className="text-muted-foreground mb-6">{t.orders.loginRequiredDesc || 'سجّل دخولك لعرض طلباتك'}</p>
+          <button
+            onClick={() => setLocation('/login')}
+            className="px-6 py-3 rounded-full bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition-colors"
+          >
+            {t.nav.login}
+          </button>
+        </div>
+      </CustomerLayout>
+    );
+  }
 
   return (
     <CustomerLayout>
@@ -28,7 +58,7 @@ export default function Orders() {
           <div className="space-y-4">
             {[1,2,3].map(i => <Card key={i} className="h-32 animate-pulse bg-secondary/50 border-none" />)}
           </div>
-        ) : orders?.length === 0 ? (
+        ) : !orders?.length ? (
           <div className="text-center py-20 bg-secondary/20 rounded-3xl border border-dashed border-border/50">
             <Package className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
             <h2 className="text-2xl font-bold mb-2">{t.orders.noOrders}</h2>
@@ -44,7 +74,7 @@ export default function Orders() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/50 pb-4 mb-4">
                     <div>
                       <div className="text-sm text-muted-foreground mb-1">
-                        {t.orders.orderNum} #{order.id} • {format(new Date(order.createdAt), 'yyyy/MM/dd HH:mm')}
+                        {t.orders.orderNum} #{order.id.slice(-6)} • {format(new Date(order.createdAt), 'yyyy/MM/dd HH:mm')}
                       </div>
                       <div className="font-bold text-lg text-primary">{formatPrice(order.total)}</div>
                     </div>
@@ -52,7 +82,6 @@ export default function Orders() {
                       <Icon className="w-4 h-4" /> {status.label}
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     {order.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm">

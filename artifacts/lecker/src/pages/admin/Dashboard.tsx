@@ -1,14 +1,19 @@
 import React from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useGetAdminStats } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui-elements';
 import { ShoppingBag, DollarSign, PackageOpen, TrendingUp } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useLang } from '@/i18n';
+import { getAdminStats } from '@/lib/firestore';
 
 export default function AdminDashboard() {
-  const { data: stats, isLoading } = useGetAdminStats();
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: getAdminStats,
+    refetchInterval: 30000,
+  });
   const { t } = useLang();
 
   const STAT_CARDS = [

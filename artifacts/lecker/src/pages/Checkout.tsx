@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { useCart } from '@/hooks/use-cart';
 import { Button, Input, Card } from '@/components/ui-elements';
-import { useCreateOrder } from '@workspace/api-client-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,18 +10,19 @@ import { useLocation } from 'wouter';
 import { toast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/utils';
 import { CheckCircle2, CreditCard, Banknote, Truck, Store } from 'lucide-react';
-import { CreateOrderRequestPaymentMethod } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
 import { useLang } from '@/i18n';
+import { createOrder, getSettings } from '@/lib/firestore';
+import { useAuth } from '@/lib/auth-context';
 
 const DELIVERY_FEE = 15;
 
 export default function Checkout() {
   const { items, getCartTotal, clearCart } = useCart();
   const [, setLocation] = useLocation();
-  const createOrder = useCreateOrder();
   const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery');
   const { t, lang } = useLang();
+  const { user } = useAuth();
 
   const checkoutSchema = z.object({
     customerName: z.string().min(2, t.checkout.nameRequired),
@@ -35,11 +35,7 @@ export default function Checkout() {
 
   const { data: storeSettings } = useQuery({
     queryKey: ['store-settings'],
-    queryFn: async () => {
-      const res = await fetch('/api/settings');
-      if (!res.ok) return { isOpen: true, deliveryEnabled: true };
-      return res.json() as Promise<{ isOpen: boolean; deliveryEnabled: boolean }>;
-    },
+    queryFn: getSettings,
     staleTime: 15000,
   });
 
@@ -59,6 +55,25 @@ export default function Checkout() {
   const deliveryFee = deliveryType === 'delivery' ? DELIVERY_FEE : 0;
   const grandTotal = cartTotal + deliveryFee;
 
+  const orderMutation = useMutation({
+    mutationFn: (data: CheckoutForm) =>
+      createOrder({
+        customerName: data.customerName,
+        customerPhone: data.customerPhone,
+        deliveryAddress: deliveryType === 'delivery' ? data.deliveryAddress : undefined,
+        deliveryType,
+        notes: data.notes,
+        paymentMethod: data.paymentMethod,
+        userId: user?.id || null,
+        items: items.map(i => ({
+          productId: i.product.id,
+          quantity: i.quantity,
+          variantName: i.variant?.nameAr,
+          variantPrice: i.variant?.price,
+        })),
+      }),
+  });
+
   if (items.length === 0) {
     setLocation('/cart');
     return null;
@@ -74,25 +89,8 @@ export default function Checkout() {
       toast({ title: t.error, description: t.checkout.addressRequired, variant: 'destructive' });
       return;
     }
-
     try {
-      await createOrder.mutateAsync({
-        data: {
-          customerName: data.customerName,
-          customerPhone: data.customerPhone,
-          deliveryAddress: deliveryType === 'delivery' ? data.deliveryAddress : null,
-          deliveryType: deliveryType as any,
-          notes: data.notes,
-          paymentMethod: data.paymentMethod as CreateOrderRequestPaymentMethod,
-          items: items.map(i => ({
-            productId: i.product.id,
-            quantity: i.quantity,
-            variantName: i.variant?.nameAr,
-            variantPrice: i.variant?.price,
-          }))
-        }
-      });
-
+      await orderMutation.mutateAsync(data);
       clearCart();
       toast({
         title: t.checkout.orderSuccess,
@@ -112,8 +110,6 @@ export default function Checkout() {
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-
-            {/* Delivery or Pickup */}
             <Card className="p-6 sm:p-8 space-y-4">
               <h2 className="text-xl font-bold flex items-center gap-2 border-b border-border/50 pb-4">
                 <Truck className="text-primary w-5 h-5" /> {t.checkout.deliveryMethod}
@@ -136,7 +132,6 @@ export default function Checkout() {
                     </div>
                   </div>
                 )}
-
                 <div
                   onClick={() => setDeliveryType('pickup')}
                   className={cn(
@@ -155,30 +150,20 @@ export default function Checkout() {
               </div>
             </Card>
 
-            {/* Customer Info */}
             <Card className="p-6 sm:p-8 space-y-6">
               <h2 className="text-xl font-bold flex items-center gap-2 border-b border-border/50 pb-4">
                 <CheckCircle2 className="text-primary w-5 h-5" /> {t.checkout.orderInfo}
               </h2>
-
               <div className="grid sm:grid-cols-2 gap-4">
                 <Input label={t.checkout.fullName} {...register('customerName')} error={errors.customerName?.message} placeholder={t.checkout.enterName} />
                 <Input label={t.checkout.phone} {...register('customerPhone')} error={errors.customerPhone?.message} placeholder="05XXXXXXXX" dir="ltr" className="text-right" />
               </div>
-
               {deliveryType === 'delivery' && (
-                <Input
-                  label={t.checkout.deliveryAddress}
-                  {...register('deliveryAddress')}
-                  placeholder={t.checkout.addressPlaceholder}
-                  required
-                />
+                <Input label={t.checkout.deliveryAddress} {...register('deliveryAddress')} placeholder={t.checkout.addressPlaceholder} required />
               )}
-
               <Input label={t.checkout.notes} {...register('notes')} placeholder={t.checkout.notesPlaceholder} />
             </Card>
 
-            {/* Payment */}
             <Card className="p-6 sm:p-8 space-y-6">
               <h2 className="text-xl font-bold flex items-center gap-2 border-b border-border/50 pb-4">
                 <CreditCard className="text-primary w-5 h-5" /> {t.checkout.paymentMethod}
@@ -193,7 +178,6 @@ export default function Checkout() {
                   </div>
                   <div><p className="font-bold">{t.checkout.cash}</p><p className="text-sm text-muted-foreground">{t.checkout.cashDesc}</p></div>
                 </div>
-
                 <div
                   onClick={() => setValue('paymentMethod', 'online')}
                   className={cn('cursor-pointer border-2 rounded-2xl p-4 flex items-center gap-4 transition-all', paymentMethod === 'online' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50')}
@@ -207,11 +191,9 @@ export default function Checkout() {
             </Card>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-1">
             <Card className="p-6 sticky top-28">
               <h3 className="text-xl font-bold mb-6 pb-4 border-b border-border/50">{t.checkout.orderSummary}</h3>
-
               <div className="space-y-3 mb-4 max-h-[30vh] overflow-y-auto pe-1">
                 {items.map(item => (
                   <div key={item.product.id} className="flex justify-between text-sm">
@@ -222,7 +204,6 @@ export default function Checkout() {
                   </div>
                 ))}
               </div>
-
               <div className="border-t border-border/50 pt-4 space-y-3 mb-6">
                 <div className="flex justify-between text-muted-foreground text-sm">
                   <span>{t.checkout.subtotal}</span>
@@ -241,8 +222,7 @@ export default function Checkout() {
                   <span>{formatPrice(grandTotal)}</span>
                 </div>
               </div>
-
-              <Button type="submit" className="w-full text-lg py-4" isLoading={createOrder.isPending}>
+              <Button type="submit" className="w-full text-lg py-4" isLoading={orderMutation.isPending}>
                 {t.checkout.confirmOrder}
               </Button>
             </Card>

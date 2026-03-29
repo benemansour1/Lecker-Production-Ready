@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useGetProducts, Product } from '@workspace/api-client-react';
 import { useQuery } from '@tanstack/react-query';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { Button, Card } from '@/components/ui-elements';
@@ -10,6 +9,7 @@ import { Plus, ShoppingCart, X, MoonStar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useLang } from '@/i18n';
+import { getProducts, getSettings, type Product } from '@/lib/firestore';
 
 const CATEGORIES_DB = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'أكل', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'حلويات خاصة'];
 
@@ -26,7 +26,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
 };
 
 function getProductName(product: Product, lang: string): string {
-  if (lang === 'he' && (product as any).nameHe) return (product as any).nameHe;
+  if (lang === 'he' && product.nameHe) return product.nameHe;
   return product.nameAr;
 }
 
@@ -90,17 +90,15 @@ export default function Home() {
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
   const { t, lang } = useLang();
 
-  const { data: products, isLoading } = useGetProducts(
-    activeCategory === 'الكل' ? {} : { category: activeCategory }
-  );
+  const { data: products, isLoading } = useQuery({
+    queryKey: ['products', activeCategory],
+    queryFn: () => getProducts(activeCategory),
+    staleTime: 30000,
+  });
 
   const { data: storeSettings } = useQuery({
     queryKey: ['store-settings'],
-    queryFn: async () => {
-      const res = await fetch('/api/settings');
-      if (!res.ok) return { isOpen: true, deliveryEnabled: true };
-      return res.json() as Promise<{ isOpen: boolean; deliveryEnabled: boolean }>;
-    },
+    queryFn: getSettings,
     refetchInterval: 30000,
     staleTime: 15000,
   });
@@ -117,14 +115,14 @@ export default function Home() {
     if (variants.length > 0) {
       setVariantProduct(product);
     } else {
-      addItem(product);
+      addItem(product as any);
       toast({ title: t.home.addedToCart, description: getProductName(product, lang), duration: 2000 });
     }
   };
 
   const handleVariantSelect = (variant: ProductVariant) => {
     if (!variantProduct) return;
-    addItem(variantProduct, 1, variant);
+    addItem(variantProduct as any, 1, variant);
     toast({
       title: t.home.addedToCart,
       description: `${getProductName(variantProduct, lang)} — ${variant.nameAr}`,
@@ -137,7 +135,6 @@ export default function Home() {
 
   return (
     <CustomerLayout>
-      {/* Store Closed Overlay */}
       <AnimatePresence>
         {isClosed && (
           <motion.div
@@ -163,7 +160,6 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Variant Selector Dialog */}
       {variantProduct && (
         <VariantDialog
           product={variantProduct}
@@ -173,7 +169,6 @@ export default function Home() {
         />
       )}
 
-      {/* Hero Section */}
       <div className="relative rounded-3xl overflow-hidden mb-12 h-64 sm:h-80 shadow-2xl shadow-black/50 border border-border/50 group">
         <img
           src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
@@ -204,7 +199,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Categories */}
       <div className="flex flex-wrap gap-2 mb-8">
         {CATEGORIES_DB.map((cat) => {
           const displayLabel = cat === 'الكل' ? t.categories.all : (t.categories[cat as keyof typeof t.categories] || cat);
@@ -226,14 +220,13 @@ export default function Home() {
         })}
       </div>
 
-      {/* Products Grid */}
       {isLoading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {[1,2,3,4,5,6,7,8,9,10].map(i => (
             <Card key={i} className="h-60 animate-pulse bg-secondary/50 border-none" />
           ))}
         </div>
-      ) : products?.length === 0 ? (
+      ) : !products?.length ? (
         <div className="text-center py-20 bg-secondary/30 rounded-3xl border border-dashed border-border">
           <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
           <h3 className="text-xl font-bold text-foreground">{t.home.noProducts}</h3>

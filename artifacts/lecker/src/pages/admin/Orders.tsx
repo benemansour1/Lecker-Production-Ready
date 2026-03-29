@@ -1,14 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useAdminGetOrders, useUpdateOrderStatus } from '@workspace/api-client-react';
 import { Card, Button } from '@/components/ui-elements';
 import { formatPrice } from '@/lib/utils';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale';
 import { toast } from '@/hooks/use-toast';
-import { UpdateOrderStatusRequestStatus } from '@workspace/api-client-react';
 import { Package, Phone, MapPin, CreditCard, Clock, Truck, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getAllOrders, updateOrderStatus, subscribeToOrders, type Order } from '@/lib/firestore';
 
 const STATUS_OPTIONS = [
   { value: 'new', label: 'جديد', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
@@ -47,7 +46,7 @@ function showBrowserNotification(count: number) {
   try {
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
     new Notification('🔔 طلب جديد في ليكير!', {
-      body: `وصل ${count} طلب${count > 1 ? 'ات' : ''} جديد${count > 1 ? 'ة' : ''} — افتح لوحة الطلبات`,
+      body: `وصل ${count} طلب${count > 1 ? 'ات' : ''} جديد — افتح لوحة الطلبات`,
       icon: '/images/lecker-logo.png',
       tag: 'new-order',
       renotify: true,
@@ -56,8 +55,8 @@ function showBrowserNotification(count: number) {
 }
 
 export default function AdminOrders() {
-  const { data: orders, refetch } = useAdminGetOrders();
-  const updateStatus = useUpdateOrderStatus();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const prevCountRef = useRef<number | null>(null);
   const soundEnabledRef = useRef(false);
@@ -65,24 +64,16 @@ export default function AdminOrders() {
     typeof Notification === 'undefined' ? 'unsupported' : Notification.permission
   );
 
-  // Enable sound on first click anywhere
   useEffect(() => {
     const enable = () => { soundEnabledRef.current = true; };
     window.addEventListener('click', enable, { once: true });
     return () => window.removeEventListener('click', enable);
   }, []);
 
-  const requestNotifications = async () => {
-    if (typeof Notification === 'undefined') return;
-    const result = await Notification.requestPermission();
-    setNotifPermission(result);
-  };
-
-  // Poll for new orders every 30 seconds and play sound on new order
+  // Real-time subscription to Firestore orders
   useEffect(() => {
-    const interval = setInterval(async () => {
-      const result = await refetch();
-      const newCount = result.data?.filter(o => o.status === 'new').length ?? 0;
+    const unsubscribe = subscribeToOrders((newOrders) => {
+      const newCount = newOrders.filter(o => o.status === 'new').length;
       if (prevCountRef.current !== null && newCount > prevCountRef.current) {
         if (soundEnabledRef.current) playOrderSound();
         showBrowserNotification(newCount);
@@ -92,38 +83,34 @@ export default function AdminOrders() {
         });
       }
       prevCountRef.current = newCount;
-    }, 30000);
+      setOrders(newOrders);
+    });
+    return () => unsubscribe();
+  }, []);
 
-    // Set initial count
-    if (orders && prevCountRef.current === null) {
-      prevCountRef.current = orders.filter(o => o.status === 'new').length;
-    }
+  const requestNotifications = async () => {
+    if (typeof Notification === 'undefined') return;
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+  };
 
-    return () => clearInterval(interval);
-  }, [orders, refetch]);
-
-  const handleStatusChange = async (orderId: number, status: string) => {
+  const handleStatusChange = async (orderId: string, status: string) => {
+    setIsUpdating(orderId);
     try {
-      await updateStatus.mutateAsync({
-        id: orderId,
-        data: { status: status as UpdateOrderStatusRequestStatus }
-      });
-      toast({ title: 'تم التحديث', description: 'تم تحديث حالة الطلب وإشعار العميل' });
-      refetch();
+      await updateOrderStatus(orderId, status as Order['status']);
+      toast({ title: 'تم التحديث', description: 'تم تحديث حالة الطلب' });
     } catch {
       toast({ title: 'خطأ', description: 'فشل التحديث', variant: 'destructive' });
+    } finally {
+      setIsUpdating(null);
     }
   };
 
-  const filtered = orders?.filter(o =>
-    statusFilter === 'all' ? true : o.status === statusFilter
-  ) ?? [];
-
-  const newCount = orders?.filter(o => o.status === 'new').length ?? 0;
+  const filtered = orders.filter(o => statusFilter === 'all' ? true : o.status === statusFilter);
+  const newCount = orders.filter(o => o.status === 'new').length;
 
   return (
     <AdminLayout>
-      {/* Notification Permission Banner */}
       {notifPermission === 'default' && (
         <div className="mb-6 flex items-center justify-between gap-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4">
           <div className="flex items-center gap-3">
@@ -145,12 +132,6 @@ export default function AdminOrders() {
         <div className="mb-6 flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-4 py-3">
           <span className="text-lg">✅</span>
           <p className="text-sm text-emerald-400 font-medium">الإشعارات مفعّلة — ستتلقى تنبيهاً عند كل طلب جديد</p>
-        </div>
-      )}
-      {notifPermission === 'denied' && (
-        <div className="mb-6 flex items-center gap-3 bg-destructive/10 border border-destructive/20 rounded-2xl px-4 py-3">
-          <span className="text-lg">🚫</span>
-          <p className="text-sm text-destructive font-medium">الإشعارات محظورة — فعّلها يدوياً من إعدادات المتصفح</p>
         </div>
       )}
 
@@ -190,20 +171,18 @@ export default function AdminOrders() {
         <div className="space-y-4">
           {filtered.map(order => {
             const statusObj = STATUS_OPTIONS.find(s => s.value === order.status);
-            const items = (order.items as any[]) || [];
-            const isDelivery = (order as any).deliveryType === 'delivery' || !!(order as any).deliveryAddress;
+            const items = order.items || [];
+            const isDelivery = order.deliveryType === 'delivery';
 
             return (
               <Card key={order.id} className={cn(
                 'overflow-hidden border transition-all',
                 order.status === 'new' ? 'border-amber-500/40 shadow-amber-500/10 shadow-lg' : 'border-border/50'
               )}>
-                {/* Header */}
                 <div className="p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    {/* Order ID + Status */}
                     <div className="flex items-center gap-3 flex-1">
-                      <div className="text-2xl font-bold text-primary">#{order.id}</div>
+                      <div className="text-lg font-bold text-primary">#{order.id.slice(-6)}</div>
                       <span className={cn('px-3 py-1 rounded-full text-xs font-bold border', statusObj?.color)}>
                         {statusObj?.label}
                       </span>
@@ -211,19 +190,15 @@ export default function AdminOrders() {
                         <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full animate-pulse font-medium">جديد!</span>
                       )}
                     </div>
-
-                    {/* Time */}
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="w-3.5 h-3.5" />
                       {format(new Date(order.createdAt), 'dd/MM/yyyy - HH:mm', { locale: arSA })}
                     </div>
-
-                    {/* Status selector */}
                     <select
                       className="bg-input border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary min-w-36"
                       value={order.status}
                       onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                      disabled={updateStatus.isPending}
+                      disabled={isUpdating === order.id}
                     >
                       {STATUS_OPTIONS.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -231,7 +206,6 @@ export default function AdminOrders() {
                     </select>
                   </div>
 
-                  {/* Customer info row */}
                   <div className="mt-3 flex flex-wrap gap-4 text-sm">
                     <div className="flex items-center gap-1.5 font-medium">
                       <span className="text-muted-foreground">👤</span>
@@ -253,65 +227,57 @@ export default function AdminOrders() {
                     </div>
                     <div className="font-bold text-primary text-base mr-auto">{formatPrice(order.total)}</div>
                   </div>
-
                 </div>
 
-                {/* Order Details - always visible */}
                 <div className="border-t border-border/50 bg-secondary/20 p-4 sm:p-5 space-y-4">
-                    {/* Items */}
-                    <div>
-                      <h3 className="font-bold mb-3 text-sm text-muted-foreground">🛍 المنتجات المطلوبة</h3>
-                      <div className="space-y-2">
-                        {items.map((item: any, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between bg-card/50 rounded-xl px-4 py-3">
-                            <div className="flex items-center gap-3">
-                              <span className="w-7 h-7 bg-primary/20 text-primary text-xs font-bold rounded-full flex items-center justify-center">
-                                {item.quantity}x
-                              </span>
-                              <span className="font-medium">{item.productNameAr || item.productName}</span>
-                            </div>
-                            <span className="text-primary font-bold">{formatPrice(item.subtotal || item.price * item.quantity)}</span>
-                          </div>
-                        ))}
-
-                        {/* Delivery fee indicator */}
-                        {isDelivery && (
-                          <div className="flex items-center justify-between bg-blue-500/10 rounded-xl px-4 py-3">
-                            <span className="text-blue-400 text-sm flex items-center gap-2">
-                              <Truck className="w-4 h-4" /> رسوم التوصيل
+                  <div>
+                    <h3 className="font-bold mb-3 text-sm text-muted-foreground">🛍 المنتجات المطلوبة</h3>
+                    <div className="space-y-2">
+                      {items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between bg-card/50 rounded-xl px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <span className="w-7 h-7 bg-primary/20 text-primary text-xs font-bold rounded-full flex items-center justify-center">
+                              {item.quantity}x
                             </span>
-                            <span className="text-blue-400 font-bold">₪15</span>
+                            <span className="font-medium">{item.productNameAr || item.productName}</span>
                           </div>
-                        )}
-
-                        <div className="flex justify-between border-t border-border/50 pt-3 font-bold text-lg">
-                          <span>الإجمالي</span>
-                          <span className="text-primary">{formatPrice(order.total)}</span>
+                          <span className="text-primary font-bold">{formatPrice(item.subtotal || item.price * item.quantity)}</span>
                         </div>
+                      ))}
+                      {isDelivery && (
+                        <div className="flex items-center justify-between bg-blue-500/10 rounded-xl px-4 py-3">
+                          <span className="text-blue-400 text-sm flex items-center gap-2">
+                            <Truck className="w-4 h-4" /> رسوم التوصيل
+                          </span>
+                          <span className="text-blue-400 font-bold">₪15</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-border/50 pt-3 font-bold text-lg">
+                        <span>الإجمالي</span>
+                        <span className="text-primary">{formatPrice(order.total)}</span>
                       </div>
                     </div>
+                  </div>
 
-                    {/* Delivery Address */}
-                    {isDelivery && (order as any).deliveryAddress && (
-                      <div className="flex items-start gap-2 bg-card/50 rounded-xl p-4">
-                        <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">عنوان التوصيل</p>
-                          <p className="font-medium">{(order as any).deliveryAddress}</p>
-                        </div>
+                  {isDelivery && order.deliveryAddress && (
+                    <div className="flex items-start gap-2 bg-card/50 rounded-xl p-4">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">عنوان التوصيل</p>
+                        <p className="font-medium">{order.deliveryAddress}</p>
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {/* Notes */}
-                    {order.notes && (
-                      <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-                        <span className="text-lg">📝</span>
-                        <div>
-                          <p className="text-xs text-muted-foreground mb-1">ملاحظات العميل</p>
-                          <p className="font-medium text-foreground">{order.notes}</p>
-                        </div>
+                  {order.notes && (
+                    <div className="flex items-start gap-2 bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                      <span className="text-lg">📝</span>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">ملاحظات العميل</p>
+                        <p className="font-medium text-foreground">{order.notes}</p>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               </Card>
             );

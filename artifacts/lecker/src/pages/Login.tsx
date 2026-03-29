@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { useSendOtp, useVerifyOtp, useGetMe } from '@workspace/api-client-react';
 import { Button, Input, Card } from '@/components/ui-elements';
 import { useLocation } from 'wouter';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { useLang } from '@/i18n';
+import { sendOtp, verifyOtp } from '@/lib/firestore';
+import { useAuth } from '@/lib/auth-context';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [loadingPhone, setLoadingPhone] = useState(false);
+  const [loadingOtp, setLoadingOtp] = useState(false);
   const [, setLocation] = useLocation();
   const { t } = useLang();
-
-  const sendOtpMutation = useSendOtp();
-  const verifyOtpMutation = useVerifyOtp();
-  const { data: user, refetch } = useGetMe({ query: { retry: false } });
+  const { login, user } = useAuth();
 
   React.useEffect(() => {
     if (user) {
@@ -27,23 +27,35 @@ export default function Login() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) return;
+    setLoadingPhone(true);
     try {
-      const res = await sendOtpMutation.mutateAsync({ data: { phone } });
+      const result = await sendOtp(phone);
       setStep('otp');
-      toast({ title: t.login.codeSent, description: res.message });
+      if (!result.fromServer) {
+        toast({ title: t.login.codeSent, description: `رمز التحقق: ${result.otp} (تجريبي)` });
+      } else {
+        toast({ title: t.login.codeSent, description: t.login.codeSentDesc || 'تم إرسال الرمز إلى هاتفك' });
+      }
     } catch (err: any) {
       toast({ title: t.error, description: err.message || t.login.sendError, variant: 'destructive' });
+    } finally {
+      setLoadingPhone(false);
     }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp) return;
+    setLoadingOtp(true);
     try {
-      await verifyOtpMutation.mutateAsync({ data: { phone, otp } });
-      await refetch();
+      const userResult = await verifyOtp(phone, otp);
+      login(userResult);
+      if (userResult.role === 'admin') setLocation('/manage/dashboard');
+      else setLocation('/');
     } catch (err: any) {
       toast({ title: t.error, description: t.login.invalidCode, variant: 'destructive' });
+    } finally {
+      setLoadingOtp(false);
     }
   };
 
@@ -72,7 +84,7 @@ export default function Login() {
                 className="text-center text-lg tracking-widest font-mono"
                 required
               />
-              <Button type="submit" className="w-full text-lg py-4" isLoading={sendOtpMutation.isPending}>{t.login.continue}</Button>
+              <Button type="submit" className="w-full text-lg py-4" isLoading={loadingPhone}>{t.login.continue}</Button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
@@ -84,13 +96,13 @@ export default function Login() {
                 label={t.login.otpLabel}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                placeholder="----"
+                placeholder="------"
                 dir="ltr"
                 maxLength={6}
                 className="text-center text-2xl tracking-[1em] font-mono font-bold"
                 required
               />
-              <Button type="submit" className="w-full text-lg py-4" isLoading={verifyOtpMutation.isPending}>{t.login.confirmLogin}</Button>
+              <Button type="submit" className="w-full text-lg py-4" isLoading={loadingOtp}>{t.login.confirmLogin}</Button>
             </form>
           )}
         </Card>

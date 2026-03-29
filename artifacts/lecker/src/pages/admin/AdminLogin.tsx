@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
-import { useSendOtp, useVerifyOtp, useGetMe, useLogout } from '@workspace/api-client-react';
 import { Button, Input, Card } from '@/components/ui-elements';
 import { useLocation } from 'wouter';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { sendOtp, verifyOtp } from '@/lib/firestore';
+import { useAuth } from '@/lib/auth-context';
 
 export default function AdminLogin() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [didLogout, setDidLogout] = useState(false);
+  const [loadingPhone, setLoadingPhone] = useState(false);
+  const [loadingOtp, setLoadingOtp] = useState(false);
   const [, setLocation] = useLocation();
-  const queryClient = useQueryClient();
-
-  const sendOtpMutation = useSendOtp();
-  const verifyOtpMutation = useVerifyOtp();
-  const { data: user, isLoading } = useGetMe({ query: { retry: false } });
-  const logoutMutation = useLogout();
+  const { user, login, logout, isLoading } = useAuth();
 
   React.useEffect(() => {
     if (!isLoading && user && user.role === 'admin') {
@@ -26,52 +22,52 @@ export default function AdminLogin() {
     }
   }, [user, isLoading, setLocation]);
 
-  const isRegularUser = !didLogout && !isLoading && !!user && user.role !== 'admin';
+  const isRegularUser = !isLoading && !!user && user.role !== 'admin';
 
-  const handleLogoutAndSwitch = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-      await queryClient.invalidateQueries();
-      await queryClient.resetQueries();
-      setDidLogout(true);
-      setStep('phone');
-      setPhone('');
-      setOtp('');
-    } catch {
-      // even if logout fails, let them try admin login
-      setDidLogout(true);
-      setStep('phone');
-    }
+  const handleLogoutAndSwitch = () => {
+    logout();
+    setStep('phone');
+    setPhone('');
+    setOtp('');
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) return;
+    setLoadingPhone(true);
     try {
-      const res = await sendOtpMutation.mutateAsync({ data: { phone } });
+      const result = await sendOtp(phone);
       setStep('otp');
-      toast({ title: 'تم الإرسال', description: res.message });
-    } catch {
-      toast({ title: 'خطأ', description: 'فشل إرسال الرمز', variant: 'destructive' });
+      if (!result.fromServer) {
+        toast({ title: 'تم الإرسال', description: `رمز التحقق: ${result.otp} (تجريبي)` });
+      } else {
+        toast({ title: 'تم الإرسال', description: 'تم إرسال الرمز إلى هاتفك' });
+      }
+    } catch (err: any) {
+      toast({ title: 'خطأ', description: err.message || 'فشل إرسال الرمز', variant: 'destructive' });
+    } finally {
+      setLoadingPhone(false);
     }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp) return;
+    setLoadingOtp(true);
     try {
-      const result = await verifyOtpMutation.mutateAsync({ data: { phone, otp } });
-      if (result.user.role !== 'admin') {
+      const userResult = await verifyOtp(phone, otp);
+      if (userResult.role !== 'admin') {
         toast({ title: 'غير مصرح', description: 'هذا الرقم ليس حساب أدمن', variant: 'destructive' });
-        await logoutMutation.mutateAsync();
-        await queryClient.resetQueries();
         setStep('phone');
         setOtp('');
         return;
       }
+      login(userResult);
       setLocation('/manage/dashboard');
-    } catch {
+    } catch (err: any) {
       toast({ title: 'خطأ', description: 'رمز التحقق غير صحيح', variant: 'destructive' });
+    } finally {
+      setLoadingOtp(false);
     }
   };
 
@@ -106,11 +102,7 @@ export default function AdminLogin() {
                 <br />
                 <span className="text-xs">هذا الحساب ليس لديه صلاحية الأدمن</span>
               </div>
-              <Button
-                onClick={handleLogoutAndSwitch}
-                className="w-full"
-                isLoading={logoutMutation.isPending}
-              >
+              <Button onClick={handleLogoutAndSwitch} className="w-full">
                 تسجيل خروج والدخول بحساب الأدمن
               </Button>
             </div>
@@ -125,7 +117,7 @@ export default function AdminLogin() {
                 className="text-center text-lg tracking-widest font-mono"
                 required
               />
-              <Button type="submit" className="w-full text-lg py-4" isLoading={sendOtpMutation.isPending}>
+              <Button type="submit" className="w-full text-lg py-4" isLoading={loadingPhone}>
                 إرسال رمز التحقق
               </Button>
             </form>
@@ -151,7 +143,7 @@ export default function AdminLogin() {
                 className="text-center text-2xl tracking-[1em] font-mono font-bold"
                 required
               />
-              <Button type="submit" className="w-full text-lg py-4" isLoading={verifyOtpMutation.isPending}>
+              <Button type="submit" className="w-full text-lg py-4" isLoading={loadingOtp}>
                 دخول لوحة الإدارة
               </Button>
             </form>

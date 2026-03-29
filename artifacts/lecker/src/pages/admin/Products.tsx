@@ -1,22 +1,43 @@
 import React, { useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useAdminGetProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, Product } from '@workspace/api-client-react';
 import { Card, Button, Input, Dialog } from '@/components/ui-elements';
 import { formatPrice } from '@/lib/utils';
 import { Plus, Edit2, Trash2, Power } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAllProducts, createProduct, updateProduct, deleteProduct, toggleProduct, type Product } from '@/lib/firestore';
+
+const CATEGORIES = ['بانكيك', 'كريب', 'وافل', 'بوظة', 'حلويات خاصة', 'مشروبات ساخنة', 'مشروبات باردة', 'أكل', 'بيرا'];
 
 export default function AdminProducts() {
-  const { data: products, refetch } = useAdminGetProducts();
-  const createProduct = useCreateProduct();
-  const updateProduct = useUpdateProduct();
-  const deleteProduct = useDeleteProduct();
+  const queryClient = useQueryClient();
+  const { data: products } = useQuery({
+    queryKey: ['admin-products'],
+    queryFn: getAllProducts,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: Omit<Product, 'id' | 'createdAt'>) => createProduct(data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
+  });
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Product> }) => updateProduct(id, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
+  });
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteProduct(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
+  });
+  const toggleMutation = useMutation({
+    mutationFn: (id: string) => toggleProduct(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-products'] }),
+  });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const { register, handleSubmit, reset } = useForm();
 
@@ -35,18 +56,11 @@ export default function AdminProducts() {
   const handleToggle = async (p: Product) => {
     setTogglingId(p.id);
     try {
-      // Use direct fetch for the toggle endpoint (not in generated client)
-      const BASE = import.meta.env.BASE_URL;
-      const resp = await fetch(`${BASE}api/admin/products/${p.id}/toggle`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-      if (!resp.ok) throw new Error();
+      await toggleMutation.mutateAsync(p.id);
       toast({
         title: p.isActive ? 'تم تعطيل المنتج' : 'تم تفعيل المنتج',
         description: `${p.nameAr} ${p.isActive ? 'معطل الآن' : 'متاح الآن للعملاء'}`,
       });
-      refetch();
     } catch {
       toast({ title: 'خطأ', description: 'فشل تغيير حالة المنتج', variant: 'destructive' });
     } finally {
@@ -59,34 +73,34 @@ export default function AdminProducts() {
       const payload = {
         name: data.nameAr || data.name,
         nameAr: data.nameAr,
+        nameHe: data.nameHe || null,
         category: data.category,
         price: Number(data.price),
-        description: data.description,
-        imageUrl: data.imageUrl,
+        description: data.description || null,
+        imageUrl: data.imageUrl || null,
         isActive: data.isActive === true || data.isActive === 'true',
-        sortOrder: Number(data.sortOrder || 0)
+        sortOrder: Number(data.sortOrder || 0),
+        variants: null,
       };
 
       if (editingProduct) {
-        await updateProduct.mutateAsync({ id: editingProduct.id, data: payload });
+        await updateMutation.mutateAsync({ id: editingProduct.id, data: payload });
         toast({ title: 'تم التحديث بنجاح' });
       } else {
-        await createProduct.mutateAsync({ data: payload });
+        await createMutation.mutateAsync(payload);
         toast({ title: 'تمت الإضافة بنجاح' });
       }
       setIsDialogOpen(false);
-      refetch();
     } catch {
       toast({ title: 'خطأ', description: 'حدث خطأ أثناء الحفظ', variant: 'destructive' });
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
       try {
-        await deleteProduct.mutateAsync({ id });
+        await deleteMutation.mutateAsync(id);
         toast({ title: 'تم الحذف' });
-        refetch();
       } catch {
         toast({ title: 'خطأ', variant: 'destructive' });
       }
@@ -97,7 +111,7 @@ export default function AdminProducts() {
     <AdminLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-3xl font-bold text-gold-gradient">المنتجات</h1>
-        <Button onClick={openCreate} className="gap-2"><Plus className="w-5 h-5"/> إضافة منتج</Button>
+        <Button onClick={openCreate} className="gap-2"><Plus className="w-5 h-5" /> إضافة منتج</Button>
       </div>
 
       <Card className="overflow-hidden">
@@ -129,6 +143,7 @@ export default function AdminProducts() {
                       )}
                       <div>
                         <p className="font-bold">{p.nameAr}</p>
+                        {p.nameHe && <p className="text-xs text-muted-foreground">{p.nameHe}</p>}
                         {!p.isActive && <p className="text-xs text-destructive">معطل</p>}
                       </div>
                     </div>
@@ -154,10 +169,10 @@ export default function AdminProducts() {
                   <td className="p-4">
                     <div className="flex items-center justify-center gap-2">
                       <button onClick={() => openEdit(p)} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                        <Edit2 className="w-4 h-4"/>
+                        <Edit2 className="w-4 h-4" />
                       </button>
                       <button onClick={() => handleDelete(p.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
-                        <Trash2 className="w-4 h-4"/>
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -175,12 +190,13 @@ export default function AdminProducts() {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
           <Input label="اسم المنتج (بالعربية)" {...register('nameAr')} required />
+          <Input label="اسم المنتج (بالعبرية)" {...register('nameHe')} placeholder="שם המוצר בעברית" dir="rtl" />
           <div className="grid grid-cols-2 gap-4">
             <Input label="السعر (شيكل)" type="number" step="0.01" {...register('price')} required />
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-muted-foreground ms-1">التصنيف</label>
               <select {...register('category')} className="bg-input/50 border-2 border-border rounded-xl px-4 py-3 text-foreground focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none">
-                {['بانكيك', 'كريب', 'وافل', 'بوظة', 'حلويات خاصة', 'مشروبات ساخنة', 'مشروبات باردة', 'وجبات خفيفة'].map(c => <option key={c} value={c}>{c}</option>)}
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>
@@ -195,7 +211,7 @@ export default function AdminProducts() {
           </div>
 
           <div className="flex gap-4 pt-4 border-t border-border/50">
-            <Button type="submit" className="flex-1" isLoading={createProduct.isPending || updateProduct.isPending}>حفظ</Button>
+            <Button type="submit" className="flex-1" isLoading={createMutation.isPending || updateMutation.isPending}>حفظ</Button>
             <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)}>إلغاء</Button>
           </div>
         </form>

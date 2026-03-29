@@ -6,17 +6,17 @@ import { Monitor, Smartphone, Tablet, Wifi, WifiOff, Clock, MapPin, Globe, LogOu
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { toast } from '@/hooks/use-toast';
+import { collection, query, onSnapshot, doc, updateDoc, orderBy, where, Timestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/lib/auth-context';
 
 interface AdminSession {
-  id: number;
-  sessionId: string;
+  id: string;
+  userId?: string;
   phone: string | null;
-  ipAddress: string | null;
   deviceType: string | null;
   browser: string | null;
   os: string | null;
-  city: string | null;
-  country: string | null;
   loginAt: string;
   lastActiveAt: string;
   isCurrent: boolean;
@@ -46,59 +46,112 @@ function DeviceIcon({ type }: { type: string | null }) {
   return <Monitor className="w-5 h-5" />;
 }
 
+function detectDevice(): string {
+  const ua = navigator.userAgent;
+  if (/tablet|ipad|playbook|silk/i.test(ua)) return 'tablet';
+  if (/mobile|iphone|android|blackberry|phone/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
+function detectBrowser(): string {
+  const ua = navigator.userAgent;
+  if (ua.includes('Chrome') && !ua.includes('Edge')) return 'Chrome';
+  if (ua.includes('Firefox')) return 'Firefox';
+  if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+  if (ua.includes('Edge')) return 'Edge';
+  return 'Unknown';
+}
+
+function detectOS(): string {
+  const ua = navigator.userAgent;
+  if (ua.includes('Windows')) return 'Windows';
+  if (ua.includes('Mac')) return 'macOS';
+  if (ua.includes('Linux')) return 'Linux';
+  if (ua.includes('Android')) return 'Android';
+  if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
+  return '';
+}
+
 export default function AdminSessions() {
   const { t } = useLang();
+  const { user } = useAuth();
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [logoutingId, setLogoutingId] = useState<number | null>(null);
+  const [, forceUpdate] = useState(0);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const fetchSessions = async () => {
+  // Register/update current session in Firestore
+  const registerSession = async () => {
+    if (!user) return;
+    const sessionId = user.id;
+    const ref = doc(db, 'sessions', sessionId);
     try {
-      const res = await fetch('/api/admin/sessions');
-      if (!res.ok) return;
-      const data = await res.json();
-      setSessions(data);
+      const { setDoc } = await import('firebase/firestore');
+      await setDoc(ref, {
+        userId: user.id,
+        phone: user.phone,
+        deviceType: detectDevice(),
+        browser: detectBrowser(),
+        os: detectOS(),
+        lastActiveAt: new Date().toISOString(),
+        loginAt: new Date().toISOString(),
+      }, { merge: true });
     } catch {}
-    setLoading(false);
   };
 
   const sendHeartbeat = async () => {
+    if (!user) return;
+    const ref = doc(db, 'sessions', user.id);
     try {
-      await fetch('/api/admin/sessions/heartbeat', { method: 'POST' });
+      await updateDoc(ref, { lastActiveAt: new Date().toISOString() });
     } catch {}
   };
 
   useEffect(() => {
-    fetchSessions();
-    sendHeartbeat();
-
+    registerSession();
     heartbeatRef.current = setInterval(sendHeartbeat, 8_000);
-    pollRef.current = setInterval(fetchSessions, 6_000);
+    timerRef.current = setInterval(() => forceUpdate(n => n + 1), 5_000);
+
+    // Real-time subscription to sessions
+    const col = collection(db, 'sessions');
+    const q = query(col, orderBy('lastActiveAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const data: AdminSession[] = snap.docs.map(d => {
+        const s = d.data();
+        return {
+          id: d.id,
+          userId: s.userId,
+          phone: s.phone || null,
+          deviceType: s.deviceType || null,
+          browser: s.browser || null,
+          os: s.os || null,
+          loginAt: s.loginAt || new Date().toISOString(),
+          lastActiveAt: s.lastActiveAt || new Date().toISOString(),
+          isCurrent: d.id === user?.id,
+        };
+      });
+      setSessions(data);
+      setLoading(false);
+    });
 
     return () => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
-      if (pollRef.current) clearInterval(pollRef.current);
+      if (timerRef.current) clearInterval(timerRef.current);
+      unsub();
     };
-  }, []);
+  }, [user]);
 
   const handleForceLogout = async (session: AdminSession) => {
     if (!window.confirm(t.admin.sessions_confirmLogout)) return;
-    setLogoutingId(session.id);
     try {
-      const res = await fetch(`/api/admin/sessions/${session.id}`, { method: 'DELETE' });
-      if (res.ok) {
-        toast({ title: t.admin.sessions_loggedOut });
-        setSessions(prev => prev.filter(s => s.id !== session.id));
-      } else {
-        const err = await res.json();
-        toast({ title: t.error, description: err.error, variant: 'destructive' });
-      }
+      const { deleteDoc } = await import('firebase/firestore');
+      const ref = doc(db, 'sessions', session.id);
+      await deleteDoc(ref);
+      toast({ title: t.admin.sessions_loggedOut });
     } catch {
       toast({ title: t.error, variant: 'destructive' });
     }
-    setLogoutingId(null);
   };
 
   const STATUS_CONFIG = {
@@ -132,19 +185,11 @@ export default function AdminSessions() {
           <h1 className="text-3xl font-bold text-gold-gradient">{t.admin.sessions_title}</h1>
           <p className="text-muted-foreground mt-1">{t.admin.sessions_desc}</p>
         </div>
-        <button
-          onClick={fetchSessions}
-          className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-          title={t.refresh}
-        >
-          <RefreshCw className="w-5 h-5" />
-        </button>
       </div>
 
-      {/* Live indicator */}
       <div className="flex items-center gap-2 mb-6 text-sm text-muted-foreground">
         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
-        تحديث تلقائي كل 6 ثوانٍ
+        تحديث فوري عبر Firestore
       </div>
 
       {loading ? (
@@ -175,7 +220,6 @@ export default function AdminSessions() {
                 session.isCurrent && 'border-primary/30 shadow-primary/10 shadow-lg'
               )}>
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                  {/* Device icon + status */}
                   <div className="flex-shrink-0 flex flex-col items-center gap-2">
                     <div className={cn('p-4 rounded-2xl border', cfg.bg, cfg.color)}>
                       <DeviceIcon type={session.deviceType} />
@@ -186,7 +230,6 @@ export default function AdminSessions() {
                     </div>
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground text-xs mb-1">{t.admin.sessions_device}</p>
@@ -203,25 +246,6 @@ export default function AdminSessions() {
                         {session.browser || t.admin.sessions_unknown}
                       </p>
                     </div>
-
-                    {(session.city || session.country) && (
-                      <div>
-                        <p className="text-muted-foreground text-xs mb-1">{t.admin.sessions_location}</p>
-                        <p className="font-semibold flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {[session.city, session.country].filter(Boolean).join(', ')}
-                        </p>
-                      </div>
-                    )}
-
-                    {session.ipAddress && (
-                      <div>
-                        <p className="text-muted-foreground text-xs mb-1">{t.admin.sessions_ip}</p>
-                        <p className="font-mono text-xs bg-secondary px-2 py-1 rounded-lg inline-block">
-                          {session.ipAddress}
-                        </p>
-                      </div>
-                    )}
 
                     {session.phone && (
                       <div>
@@ -241,7 +265,6 @@ export default function AdminSessions() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     {session.isCurrent ? (
                       <span className="px-3 py-1.5 rounded-xl text-xs font-bold bg-primary/10 text-primary border border-primary/20">
@@ -250,8 +273,7 @@ export default function AdminSessions() {
                     ) : (
                       <button
                         onClick={() => handleForceLogout(session)}
-                        disabled={logoutingId === session.id}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold text-destructive border border-destructive/20 hover:bg-destructive/10 transition-colors"
                       >
                         <LogOut className="w-3.5 h-3.5" />
                         {t.admin.sessions_forceLogout}

@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
-import { useGetMonthlyRevenue } from '@workspace/api-client-react';
+import { useQuery } from '@tanstack/react-query';
 import { Card } from '@/components/ui-elements';
 import { formatPrice } from '@/lib/utils';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { getMonthlyRevenue } from '@/lib/firestore';
 
 export default function AdminRevenueMonthly() {
   const currentObj = new Date();
   const [month, setMonth] = useState((currentObj.getMonth() + 1).toString().padStart(2, '0'));
   const [year, setYear] = useState(currentObj.getFullYear().toString());
-  
-  const { data: revenue, isLoading } = useGetMonthlyRevenue({ month, year });
+
+  const { data: revenue, isLoading } = useQuery({
+    queryKey: ['monthly-revenue', year, month],
+    queryFn: () => getMonthlyRevenue(Number(year), Number(month)),
+  });
 
   return (
     <AdminLayout>
@@ -21,15 +25,15 @@ export default function AdminRevenueMonthly() {
         </div>
         <div className="flex gap-2">
           <select value={month} onChange={e => setMonth(e.target.value)} className="bg-input border-2 border-border rounded-xl px-4 py-2 outline-none">
-            {Array.from({length: 12}, (_, i) => {
+            {Array.from({ length: 12 }, (_, i) => {
               const m = (i + 1).toString().padStart(2, '0');
-              return <option key={m} value={m}>شهر {m}</option>
+              return <option key={m} value={m}>شهر {m}</option>;
             })}
           </select>
           <select value={year} onChange={e => setYear(e.target.value)} className="bg-input border-2 border-border rounded-xl px-4 py-2 outline-none">
-            {Array.from({length: 5}, (_, i) => {
+            {Array.from({ length: 5 }, (_, i) => {
               const y = (currentObj.getFullYear() - i).toString();
-              return <option key={y} value={y}>{y}</option>
+              return <option key={y} value={y}>{y}</option>;
             })}
           </select>
         </div>
@@ -52,14 +56,14 @@ export default function AdminRevenueMonthly() {
 
           <Card className="p-6 h-[400px]">
             <h3 className="text-xl font-bold mb-6">الأيام الأعلى مبيعاً</h3>
-            {revenue.breakdown.length > 0 ? (
+            {revenue.breakdown.some(b => b.orders > 0) ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenue.breakdown} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff1a" vertical={false} />
-                  <XAxis dataKey="label" stroke="#a1a1aa" tick={{fill: '#a1a1aa'}} />
-                  <YAxis stroke="#a1a1aa" tick={{fill: '#a1a1aa'}} />
-                  <Tooltip 
-                    cursor={{fill: '#ffffff0a'}}
+                  <XAxis dataKey="label" stroke="#a1a1aa" tick={{ fill: '#a1a1aa' }} />
+                  <YAxis stroke="#a1a1aa" tick={{ fill: '#a1a1aa' }} />
+                  <Tooltip
+                    cursor={{ fill: '#ffffff0a' }}
                     contentStyle={{ backgroundColor: '#1a0a00', border: '1px solid #4a2c11', borderRadius: '12px', color: '#fdf6e3' }}
                   />
                   <Bar dataKey="revenue" fill="#d4af37" radius={[4, 4, 0, 0]} name="الإيرادات (₪)" />

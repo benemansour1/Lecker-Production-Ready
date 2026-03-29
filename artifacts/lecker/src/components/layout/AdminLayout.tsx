@@ -2,9 +2,9 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { LayoutDashboard, ShoppingBag, PackageOpen, Settings, LogOut, BarChart3, CalendarDays, MonitorSmartphone } from 'lucide-react';
-import { useGetMe, useLogout } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
 import { useLang } from '@/i18n';
+import { useAuth } from '@/lib/auth-context';
 
 function LanguageToggle() {
   const { lang, setLang } = useLang();
@@ -21,8 +21,7 @@ function LanguageToggle() {
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
-  const { data: user, isLoading } = useGetMe({ query: { retry: false } });
-  const logoutMutation = useLogout();
+  const { user, isLoading, logout, isAdmin } = useAuth();
   const { t } = useLang();
 
   const navItems = [
@@ -36,25 +35,24 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   ];
 
   React.useEffect(() => {
-    if (!isLoading && (!user || user.role !== 'admin')) {
+    if (!isLoading && (!user || !isAdmin)) {
       setLocation('/manage/login');
     }
-  }, [user, isLoading, setLocation]);
+  }, [user, isLoading, isAdmin, setLocation]);
 
-  if (isLoading || !user) return (
+  if (isLoading || !user || !isAdmin) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
     </div>
   );
 
-  const handleLogout = async () => {
-    await logoutMutation.mutateAsync();
+  const handleLogout = () => {
+    logout();
     setLocation('/');
   };
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Sidebar */}
       <aside className="w-72 hidden lg:flex flex-col border-e border-border/50 glass-panel border-y-0 rounded-none z-10 relative">
         <div className="p-6 flex items-center justify-center border-b border-border/50">
           <Link href="/" className="flex flex-col items-center gap-2 group">
@@ -86,14 +84,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Mobile Header */}
         <header className="lg:hidden h-16 border-b border-border/50 glass-panel flex items-center justify-between px-4 z-20">
           <span className="text-lg font-bold text-primary">{t.admin.title}</span>
           <div className="flex items-center gap-2">
             <LanguageToggle />
-            <button onClick={handleLogout} className="p-2 text-destructive"><LogOut className="w-5 h-5"/></button>
+            <button onClick={handleLogout} className="p-2 text-destructive"><LogOut className="w-5 h-5" /></button>
           </div>
         </header>
 
