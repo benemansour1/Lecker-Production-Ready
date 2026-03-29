@@ -76,8 +76,9 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-border/50 bg-background/50 py-8 text-center text-muted-foreground text-sm">
+      <footer className="mt-auto border-t border-border/50 bg-background/50 py-8 text-center text-muted-foreground text-sm space-y-1">
         <p>© {new Date().getFullYear()} ليكير للحلويات. جميع الحقوق محفوظة.</p>
+        <p className="text-xs opacity-60">تصميم وتطوير <span className="font-medium">bene_mansour</span></p>
       </footer>
     </div>
   );
