@@ -39,8 +39,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-if (!process.env.SESSION_SECRET) {
-  throw new Error("SESSION_SECRET environment variable is required");
+const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret && process.env.NODE_ENV === "production") {
+  throw new Error("SESSION_SECRET environment variable is required in production");
 }
 
 app.use(session({
@@ -49,7 +50,7 @@ app.use(session({
     tableName: "sessions",
     createTableIfMissing: true,
   }),
-  secret: process.env.SESSION_SECRET,
+  secret: sessionSecret ?? "dev-secret-change-in-production",
   resave: false,
   saveUninitialized: false,
   cookie: {
