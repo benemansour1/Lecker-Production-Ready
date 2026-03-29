@@ -56,7 +56,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="text-4xl sm:text-5xl font-bold text-gold-gradient mb-4 drop-shadow-lg"
             >
-              حلاوة تذوب في الفم
+              لحظة حلوة تستحق ✨
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
