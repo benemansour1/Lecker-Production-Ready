@@ -42,7 +42,7 @@ function VariantDialog({
   lang: string;
 }) {
   const { t } = useLang();
-  const variants = (product.variants as ProductVariant[] | null) ?? [];
+  const variants = product.variants ?? [];
   return (
     <AnimatePresence>
       <motion.div
@@ -116,7 +116,7 @@ export default function Home() {
       toast({ title: t.home.storeClosedToast, description: t.home.storeClosedToastDesc, variant: 'destructive', duration: 3000 });
       return;
     }
-    const variants = (product.variants as ProductVariant[] | null) ?? [];
+    const variants = product.variants ?? [];
     if (variants.length > 0) {
       setVariantProduct(product);
     } else {
@@ -261,7 +261,7 @@ export default function Home() {
                       </div>
                     )}
                     <div className="absolute top-2 end-2 bg-background/85 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold text-primary border border-primary/20 shadow">
-                      {hasVariants ? `${lang === 'he' ? 'מ-' : 'من '} ${formatPrice((product.variants as any[])[0].price)}` : formatPrice(product.price)}
+                      {hasVariants ? `${lang === 'he' ? 'מ-' : 'من '} ${formatPrice(product.variants[0].price)}` : formatPrice(product.price)}
                     </div>
                     {hasVariants && (
                       <div className="absolute top-2 start-2 bg-amber-500/90 px-2 py-0.5 rounded-full text-xs font-bold text-background">

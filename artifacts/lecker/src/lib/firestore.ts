@@ -30,7 +30,7 @@ export interface Product {
   imageUrl?: string | null;
   isActive: boolean;
   sortOrder: number;
-  variants?: ProductVariant[] | null;
+  variants: ProductVariant[];
   createdAt?: string;
 }
 
@@ -105,7 +105,7 @@ function docToProduct(d: DocumentData & { id: string }): Product {
     imageUrl: data.imageUrl || null,
     isActive: data.isActive !== false,
     sortOrder: Number(data.sortOrder || 0),
-    variants: data.variants || null,
+    variants: data.variants ?? [],
     createdAt: tsToISO(data.createdAt),
   };
 }
@@ -227,7 +227,7 @@ export async function createOrder(data: {
     let price = p.price;
     let label = "";
     if (p.variantName && p.variantPrice) {
-      const variants = (p.variants as ProductVariant[] | null) ?? [];
+      const variants = p.variants ?? [];
       const matched = variants.find((v) => v.nameAr === p.variantName);
       if (matched) { price = matched.price; label = matched.nameAr; }
       else { price = Number(p.variantPrice); label = p.variantName; }

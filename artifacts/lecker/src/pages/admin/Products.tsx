@@ -80,7 +80,7 @@ export default function AdminProducts() {
         imageUrl: data.imageUrl || null,
         isActive: data.isActive === true || data.isActive === 'true',
         sortOrder: Number(data.sortOrder || 0),
-        variants: null,
+        variants: [],
       };
 
       if (editingProduct) {
