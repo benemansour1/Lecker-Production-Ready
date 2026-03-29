@@ -42,7 +42,7 @@ export default function AdminSettings() {
 
   return (
     <AdminLayout>
-      <h1 className="text-3xl font-display text-gold-gradient mb-8">إعدادات المتجر</h1>
+      <h1 className="text-3xl font-bold text-gold-gradient mb-8">إعدادات المتجر</h1>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-3xl">
         <Card className="p-6">

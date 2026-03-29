@@ -86,7 +86,7 @@ export const Dialog = ({ isOpen, onClose, title, children }: { isOpen: boolean, 
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl p-6 pointer-events-auto max-h-[90vh] overflow-y-auto"
             >
-              <h2 className="text-2xl font-display text-gold-gradient mb-6">{title}</h2>
+              <h2 className="text-2xl font-bold text-gold-gradient mb-6">{title}</h2>
               {children}
             </motion.div>
           </div>

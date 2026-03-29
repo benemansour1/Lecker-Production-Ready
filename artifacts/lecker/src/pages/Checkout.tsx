@@ -63,7 +63,7 @@ export default function Checkout() {
   return (
     <CustomerLayout>
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-display text-gold-gradient mb-8">إتمام الطلب</h1>
+        <h1 className="text-3xl font-bold text-gold-gradient mb-8">إتمام الطلب</h1>
         
         <form onSubmit={handleSubmit(onSubmit)} className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">

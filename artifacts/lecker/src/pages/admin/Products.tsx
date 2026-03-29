@@ -72,7 +72,7 @@ export default function AdminProducts() {
   return (
     <AdminLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-display text-gold-gradient">المنتجات</h1>
+        <h1 className="text-3xl font-bold text-gold-gradient">المنتجات</h1>
         <Button onClick={openCreate} className="gap-2"><Plus className="w-5 h-5"/> إضافة منتج</Button>
       </div>
 

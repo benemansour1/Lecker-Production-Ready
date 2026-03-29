@@ -20,7 +20,7 @@ export default function Orders() {
   return (
     <CustomerLayout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-display text-gold-gradient mb-8">طلباتي</h1>
+        <h1 className="text-3xl font-bold text-gold-gradient mb-8">طلباتي</h1>
 
         {isLoading ? (
           <div className="space-y-4">

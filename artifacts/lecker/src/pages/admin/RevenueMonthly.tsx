@@ -16,7 +16,7 @@ export default function AdminRevenueMonthly() {
     <AdminLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-display text-gold-gradient">الإيرادات الشهرية</h1>
+          <h1 className="text-3xl font-bold text-gold-gradient">الإيرادات الشهرية</h1>
           <p className="text-muted-foreground mt-1">تحليل مبيعات شهر محدد</p>
         </div>
         <div className="flex gap-2">

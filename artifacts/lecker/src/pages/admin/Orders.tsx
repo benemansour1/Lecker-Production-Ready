@@ -34,7 +34,7 @@ export default function AdminOrders() {
 
   return (
     <AdminLayout>
-      <h1 className="text-3xl font-display text-gold-gradient mb-8">إدارة الطلبات</h1>
+      <h1 className="text-3xl font-bold text-gold-gradient mb-8">إدارة الطلبات</h1>
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">

@@ -10,6 +10,17 @@ import { motion } from 'framer-motion';
 
 const CATEGORIES = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'حلويات خاصة', 'مشروبات ساخنة', 'مشروبات باردة', 'وجبات خفيفة'];
 
+const CATEGORY_EMOJI: Record<string, string> = {
+  'بانكيك': '🥞',
+  'كريب': '🫔',
+  'وافل': '🧇',
+  'بوظة': '🍨',
+  'حلويات خاصة': '🍫',
+  'مشروبات ساخنة': '☕',
+  'مشروبات باردة': '🧋',
+  'وجبات خفيفة': '🍿',
+};
+
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState('الكل');
   
@@ -101,8 +112,10 @@ export default function Home() {
                   {product.imageUrl ? (
                     <img src={product.imageUrl} alt={product.nameAr} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
-                      <ShoppingCart className="w-12 h-12" />
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary/80 to-background/60">
+                      <span className="text-6xl drop-shadow-lg select-none">
+                        {CATEGORY_EMOJI[product.category ?? ''] ?? '🍬'}
+                      </span>
                     </div>
                   )}
                   <div className="absolute top-3 end-3 bg-background/80 backdrop-blur-md px-3 py-1 rounded-full text-sm font-bold text-primary border border-primary/20 shadow-lg">

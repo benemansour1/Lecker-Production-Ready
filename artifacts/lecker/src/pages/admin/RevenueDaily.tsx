@@ -14,7 +14,7 @@ export default function AdminRevenueDaily() {
     <AdminLayout>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-display text-gold-gradient">الإيرادات اليومية</h1>
+          <h1 className="text-3xl font-bold text-gold-gradient">الإيرادات اليومية</h1>
           <p className="text-muted-foreground mt-1">تحليل مبيعات يوم محدد</p>
         </div>
         <input 

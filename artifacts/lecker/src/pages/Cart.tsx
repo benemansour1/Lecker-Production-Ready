@@ -12,7 +12,7 @@ export default function Cart() {
   return (
     <CustomerLayout>
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-display text-gold-gradient mb-8">سلة المشتريات</h1>
+        <h1 className="text-3xl font-bold text-gold-gradient mb-8">سلة المشتريات</h1>
         
         {items.length === 0 ? (
           <div className="text-center py-20 bg-secondary/20 rounded-3xl border border-dashed border-border/50">

@@ -2,36 +2,46 @@ import React, { useState } from 'react';
 import { useSendOtp, useVerifyOtp, useGetMe, useLogout } from '@workspace/api-client-react';
 import { Button, Input, Card } from '@/components/ui-elements';
 import { useLocation } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { ShieldCheck } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function AdminLogin() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [didLogout, setDidLogout] = useState(false);
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const sendOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
-  const { data: user, isLoading, refetch } = useGetMe({ query: { retry: false } });
+  const { data: user, isLoading } = useGetMe({ query: { retry: false } });
   const logoutMutation = useLogout();
 
   React.useEffect(() => {
-    if (!isLoading && user) {
-      if (user.role === 'admin') {
-        setLocation('/admin/dashboard');
-      }
+    if (!isLoading && user && user.role === 'admin') {
+      setLocation('/admin/dashboard');
     }
   }, [user, isLoading, setLocation]);
 
+  const isRegularUser = !didLogout && !isLoading && !!user && user.role !== 'admin';
+
   const handleLogoutAndSwitch = async () => {
-    await logoutMutation.mutateAsync();
-    await refetch();
-    setStep('phone');
-    setPhone('');
-    setOtp('');
+    try {
+      await logoutMutation.mutateAsync();
+      await queryClient.invalidateQueries();
+      await queryClient.resetQueries();
+      setDidLogout(true);
+      setStep('phone');
+      setPhone('');
+      setOtp('');
+    } catch {
+      // even if logout fails, let them try admin login
+      setDidLogout(true);
+      setStep('phone');
+    }
   };
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -54,6 +64,7 @@ export default function AdminLogin() {
       if (result.user.role !== 'admin') {
         toast({ title: 'غير مصرح', description: 'هذا الرقم ليس حساب أدمن', variant: 'destructive' });
         await logoutMutation.mutateAsync();
+        await queryClient.resetQueries();
         setStep('phone');
         setOtp('');
         return;
@@ -64,7 +75,13 @@ export default function AdminLogin() {
     }
   };
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-background">
@@ -82,10 +99,18 @@ export default function AdminLogin() {
             <p className="text-muted-foreground mt-2 text-sm">مخصص للمشرفين فقط</p>
           </div>
 
-          {!isLoading && user && user.role !== 'admin' ? (
+          {isRegularUser ? (
             <div className="text-center space-y-4">
-              <p className="text-muted-foreground text-sm">أنت مسجل الدخول كمستخدم عادي ({user.phone})</p>
-              <Button onClick={handleLogoutAndSwitch} className="w-full" isLoading={logoutMutation.isPending}>
+              <div className="bg-secondary/50 rounded-xl p-4 text-sm text-muted-foreground">
+                أنت مسجل الدخول كـ <span className="font-bold text-foreground" dir="ltr">{user!.phone}</span>
+                <br />
+                <span className="text-xs">هذا الحساب ليس لديه صلاحية الأدمن</span>
+              </div>
+              <Button
+                onClick={handleLogoutAndSwitch}
+                className="w-full"
+                isLoading={logoutMutation.isPending}
+              >
                 تسجيل خروج والدخول بحساب الأدمن
               </Button>
             </div>
@@ -108,7 +133,11 @@ export default function AdminLogin() {
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div className="text-center mb-4 text-sm text-muted-foreground">
                 أدخل الرمز المرسل إلى <span className="font-bold text-foreground" dir="ltr">{phone}</span>
-                <button type="button" onClick={() => { setStep('phone'); setOtp(''); }} className="block mx-auto mt-2 text-primary hover:underline">
+                <button
+                  type="button"
+                  onClick={() => { setStep('phone'); setOtp(''); }}
+                  className="block mx-auto mt-2 text-primary hover:underline"
+                >
                   تعديل الرقم
                 </button>
               </div>
