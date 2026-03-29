@@ -23,7 +23,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <img src={`${import.meta.env.BASE_URL}images/lecker-logo.png`} alt="Lecker" className="h-12 w-12 object-contain group-hover:scale-110 transition-transform" />
-            <span className="text-2xl font-bold text-gold-gradient">لكر</span>
+            <span className="text-2xl font-bold text-gold-gradient">ليكير</span>
           </Link>
 
           <div className="flex items-center gap-4 sm:gap-6">
@@ -77,7 +77,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
 
       {/* Footer */}
       <footer className="mt-auto border-t border-border/50 bg-background/50 py-8 text-center text-muted-foreground text-sm">
-        <p>© {new Date().getFullYear()} لكر للحلويات. جميع الحقوق محفوظة.</p>
+        <p>© {new Date().getFullYear()} ليكير للحلويات. جميع الحقوق محفوظة.</p>
       </footer>
     </div>
   );

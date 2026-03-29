@@ -95,7 +95,7 @@ export default function AdminLogin() {
             <div className="w-20 h-20 mx-auto mb-4 bg-primary/10 border border-primary/30 rounded-2xl flex items-center justify-center">
               <ShieldCheck className="w-10 h-10 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-gold-gradient">لوحة إدارة لكر</h1>
+            <h1 className="text-2xl font-bold text-gold-gradient">لوحة إدارة ليكير</h1>
             <p className="text-muted-foreground mt-2 text-sm">مخصص للمشرفين فقط</p>
           </div>
 

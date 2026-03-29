@@ -21,7 +21,7 @@ export default function AdminDashboard() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gold-gradient">نظرة عامة</h1>
-          <p className="text-muted-foreground mt-1">مرحباً بك في لوحة تحكم متجر لكر</p>
+          <p className="text-muted-foreground mt-1">مرحباً بك في لوحة تحكم متجر ليكير</p>
         </div>
       </div>
 

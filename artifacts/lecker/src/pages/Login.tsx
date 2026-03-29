@@ -56,7 +56,7 @@ export default function Login() {
         <Card className="p-8 sm:p-10 backdrop-blur-xl bg-card/80 border-primary/20 shadow-2xl shadow-primary/10">
           <div className="text-center mb-8">
             <img src={`${import.meta.env.BASE_URL}images/lecker-logo.png`} alt="Lecker" className="h-20 w-20 mx-auto mb-4 drop-shadow-md" />
-            <h1 className="text-2xl font-bold text-gold-gradient">أهلاً بك في لكر</h1>
+            <h1 className="text-2xl font-bold text-gold-gradient">أهلاً بك في ليكير</h1>
             <p className="text-muted-foreground mt-2">تسجيل الدخول لمتابعة طلباتك</p>
           </div>
 

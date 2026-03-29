@@ -171,12 +171,12 @@ router.put("/orders/:id/status", async (req, res) => {
       let smsMsg: string | null = null;
 
       if (status === "ready") {
-        smsMsg = `🎉 طلبك #${id} من لكر جاهز!\n` +
+        smsMsg = `🎉 طلبك #${id} من ليكير جاهز!\n` +
           (order.deliveryType === "pickup"
             ? "تفضل استلمه من المحل الآن 🏪"
             : "سيصلك قريباً 🛵");
       } else if (status === "delivered") {
-        smsMsg = `✅ تم تسليم طلبك #${id} بنجاح!\nشكراً لاختيارك لكر 🍬`;
+        smsMsg = `✅ تم تسليم طلبك #${id} بنجاح!\nشكراً لاختيارك ليكير 🍬`;
       } else if (status === "cancelled") {
         smsMsg = `❌ عذراً، تم إلغاء طلبك #${id}.\nتواصل معنا لمزيد من المعلومات.`;
       } else if (status === "preparing") {

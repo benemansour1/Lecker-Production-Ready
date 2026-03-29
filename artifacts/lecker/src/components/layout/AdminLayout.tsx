@@ -40,7 +40,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <div className="p-6 flex items-center justify-center border-b border-border/50">
           <Link href="/" className="flex flex-col items-center gap-2 group">
             <img src={`${import.meta.env.BASE_URL}images/lecker-logo.png`} alt="Lecker" className="h-16 w-16 object-contain drop-shadow-lg" />
-            <span className="text-xl font-bold text-gold-gradient">إدارة لكر</span>
+            <span className="text-xl font-bold text-gold-gradient">إدارة ليكير</span>
           </Link>
         </div>
 
@@ -70,7 +70,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile Header */}
         <header className="lg:hidden h-16 border-b border-border/50 glass-panel flex items-center justify-between px-4 z-20">
-          <span className="text-lg font-bold text-primary">إدارة لكر</span>
+          <span className="text-lg font-bold text-primary">إدارة ليكير</span>
           <button onClick={handleLogout} className="p-2 text-destructive"><LogOut className="w-5 h-5"/></button>
         </header>
         
