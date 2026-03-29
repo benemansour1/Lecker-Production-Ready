@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import { useLang } from '@/i18n';
 import { subscribeToProducts, getSettings, type Product } from '@/lib/firestore';
 
-const CATEGORIES_DB = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'مشروبات ساخنة', 'عصائر', 'مشروبات باردة', 'بيرا', 'أكل', 'حلويات خاصة'];
+const CATEGORIES_DB = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'أكل', 'حلويات خاصة'];
 
 const CATEGORY_EMOJI: Record<string, string> = {
   'بانكيك': '🥞',
@@ -20,7 +20,6 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'بوظة': '🍨',
   'أكل': '🍔',
   'مشروبات ساخنة': '☕',
-  'عصائر': '🍊',
   'مشروبات باردة': '🥤',
   'بيرا': '🍺',
   'حلويات خاصة': '🍫',
