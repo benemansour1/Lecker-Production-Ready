@@ -9,14 +9,13 @@ import { Plus, ShoppingCart, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-const CATEGORIES = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'فشافيش', 'أكل', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'حلويات خاصة'];
+const CATEGORIES = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'أكل', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'حلويات خاصة'];
 
 const CATEGORY_EMOJI: Record<string, string> = {
   'بانكيك': '🥞',
   'كريب': '🫔',
   'وافل': '🧇',
   'بوظة': '🍨',
-  'فشافيش': '🍿',
   'أكل': '🍔',
   'مشروبات ساخنة': '☕',
   'مشروبات باردة': '🧋',
@@ -152,13 +151,13 @@ export default function Home() {
       </div>
 
       {/* Categories */}
-      <div className="flex overflow-x-auto pb-4 mb-8 gap-3 no-scrollbar snap-x">
+      <div className="flex flex-wrap gap-2 mb-8">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={cn(
-              'snap-start whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2',
+              'whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2',
               activeCategory === cat 
                 ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105' 
                 : 'bg-secondary text-secondary-foreground hover:bg-primary/20 hover:text-primary'
