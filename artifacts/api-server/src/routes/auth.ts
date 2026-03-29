@@ -1,11 +1,27 @@
 import { Router, type IRouter } from "express";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import twilio from "twilio";
 
 const router: IRouter = Router();
 
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function sendSms(to: string, body: string): Promise<void> {
+  const accountSid = process.env["TWILIO_ACCOUNT_SID"];
+  const authToken = process.env["TWILIO_AUTH_TOKEN"];
+  const fromPhone = process.env["TWILIO_PHONE_NUMBER"];
+
+  if (!accountSid || !authToken || !fromPhone) {
+    // Twilio not configured - log OTP for development
+    console.log(`[OTP for ${to}]: ${body}`);
+    return;
+  }
+
+  const client = twilio(accountSid, authToken);
+  await client.messages.create({ body, from: fromPhone, to });
 }
 
 router.post("/send-otp", async (req, res) => {
@@ -34,9 +50,17 @@ router.post("/send-otp", async (req, res) => {
       });
     }
 
-    req.log.info({ phone, otp }, "OTP generated");
+    const hasTwilio = !!(process.env["TWILIO_ACCOUNT_SID"] && process.env["TWILIO_AUTH_TOKEN"] && process.env["TWILIO_PHONE_NUMBER"]);
 
-    res.json({ message: `تم إرسال رمز التحقق: ${otp}` });
+    await sendSms(phone, `رمز التحقق لـ lecker: ${otp}\nصالح لمدة 10 دقائق.`);
+
+    req.log.info({ phone }, "OTP generated and sent");
+
+    if (hasTwilio) {
+      res.json({ message: "تم إرسال رمز التحقق إلى هاتفك" });
+    } else {
+      res.json({ message: `رمز التحقق: ${otp} (تجريبي - لتفعيل SMS الحقيقي أضف Twilio)` });
+    }
   } catch (err) {
     req.log.error({ err }, "Error in send-otp");
     res.status(500).json({ error: "حدث خطأ، يرجى المحاولة مجدداً" });

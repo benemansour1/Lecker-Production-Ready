@@ -32,7 +32,7 @@ export default function Home() {
           <div className="max-w-xl">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="text-4xl sm:text-6xl font-display text-gold-gradient mb-4 drop-shadow-lg"
+              className="text-4xl sm:text-5xl font-bold text-gold-gradient mb-4 drop-shadow-lg"
             >
               حلاوة تذوب في الفم
             </motion.h1>
