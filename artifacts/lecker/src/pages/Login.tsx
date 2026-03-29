@@ -4,18 +4,19 @@ import { Button, Input, Card } from '@/components/ui-elements';
 import { useLocation } from 'wouter';
 import { toast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
+import { useLang } from '@/i18n';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [, setLocation] = useLocation();
+  const { t } = useLang();
 
   const sendOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
   const { data: user, refetch } = useGetMe({ query: { retry: false } });
 
-  // Redirect if already logged in
   React.useEffect(() => {
     if (user) {
       if (user.role === 'admin') setLocation('/manage/dashboard');
@@ -29,9 +30,9 @@ export default function Login() {
     try {
       const res = await sendOtpMutation.mutateAsync({ data: { phone } });
       setStep('otp');
-      toast({ title: 'تم إرسال الرمز', description: res.message }); // In dev this shows the OTP
+      toast({ title: t.login.codeSent, description: res.message });
     } catch (err: any) {
-      toast({ title: 'خطأ', description: err.message || 'فشل إرسال الرمز', variant: 'destructive' });
+      toast({ title: t.error, description: err.message || t.login.sendError, variant: 'destructive' });
     }
   };
 
@@ -40,9 +41,9 @@ export default function Login() {
     if (!otp) return;
     try {
       await verifyOtpMutation.mutateAsync({ data: { phone, otp } });
-      await refetch(); // Will trigger the redirect effect
+      await refetch();
     } catch (err: any) {
-      toast({ title: 'خطأ', description: 'رمز التحقق غير صحيح', variant: 'destructive' });
+      toast({ title: t.error, description: t.login.invalidCode, variant: 'destructive' });
     }
   };
 
@@ -51,45 +52,45 @@ export default function Login() {
       <div className="absolute inset-0 z-0">
         <img src={`${import.meta.env.BASE_URL}images/hero-bg.png`} alt="Background" className="w-full h-full object-cover opacity-20 blur-sm" />
       </div>
-      
+
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="z-10 w-full max-w-md">
         <Card className="p-8 sm:p-10 backdrop-blur-xl bg-card/80 border-primary/20 shadow-2xl shadow-primary/10">
           <div className="text-center mb-8">
             <img src={`${import.meta.env.BASE_URL}images/lecker-logo.png`} alt="Lecker" className="h-20 w-20 mx-auto mb-4 drop-shadow-md" />
-            <h1 className="text-2xl font-bold text-gold-gradient">أهلاً بك في ليكير</h1>
-            <p className="text-muted-foreground mt-2">تسجيل الدخول لمتابعة طلباتك</p>
+            <h1 className="text-2xl font-bold text-gold-gradient">{t.login.welcome}</h1>
+            <p className="text-muted-foreground mt-2">{t.login.subtitle}</p>
           </div>
 
           {step === 'phone' ? (
             <form onSubmit={handleSendOtp} className="space-y-6">
-              <Input 
-                label="رقم الجوال" 
-                value={phone} 
-                onChange={(e) => setPhone(e.target.value)} 
-                placeholder="05XXXXXXXX" 
-                dir="ltr" 
+              <Input
+                label={t.login.phone}
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="05XXXXXXXX"
+                dir="ltr"
                 className="text-center text-lg tracking-widest font-mono"
                 required
               />
-              <Button type="submit" className="w-full text-lg py-4" isLoading={sendOtpMutation.isPending}>متابعة</Button>
+              <Button type="submit" className="w-full text-lg py-4" isLoading={sendOtpMutation.isPending}>{t.login.continue}</Button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div className="text-center mb-4 text-sm text-muted-foreground">
-                أدخل الرمز المرسل إلى <span className="font-bold text-foreground" dir="ltr">{phone}</span>
-                <button type="button" onClick={() => setStep('phone')} className="block mx-auto mt-2 text-primary hover:underline">تعديل الرقم</button>
+                {t.login.enterCode} <span className="font-bold text-foreground" dir="ltr">{phone}</span>
+                <button type="button" onClick={() => setStep('phone')} className="block mx-auto mt-2 text-primary hover:underline">{t.login.editNumber}</button>
               </div>
-              <Input 
-                label="رمز التحقق (OTP)" 
-                value={otp} 
-                onChange={(e) => setOtp(e.target.value)} 
-                placeholder="----" 
-                dir="ltr" 
+              <Input
+                label={t.login.otpLabel}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="----"
+                dir="ltr"
                 maxLength={6}
                 className="text-center text-2xl tracking-[1em] font-mono font-bold"
                 required
               />
-              <Button type="submit" className="w-full text-lg py-4" isLoading={verifyOtpMutation.isPending}>تأكيد الدخول</Button>
+              <Button type="submit" className="w-full text-lg py-4" isLoading={verifyOtpMutation.isPending}>{t.login.confirmLogin}</Button>
             </form>
           )}
         </Card>

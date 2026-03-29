@@ -1,32 +1,51 @@
 import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, ShoppingBag, PackageOpen, Settings, LogOut, BarChart3, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, PackageOpen, Settings, LogOut, BarChart3, CalendarDays, MonitorSmartphone } from 'lucide-react';
 import { useGetMe, useLogout } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
+import { useLang } from '@/i18n';
 
-const navItems = [
-  { name: 'لوحة القيادة', href: '/manage/dashboard', icon: LayoutDashboard },
-  { name: 'الطلبات', href: '/manage/orders', icon: ShoppingBag },
-  { name: 'المنتجات', href: '/manage/products', icon: PackageOpen },
-  { name: 'الإيرادات اليومية', href: '/manage/revenue/daily', icon: CalendarDays },
-  { name: 'الإيرادات الشهرية', href: '/manage/revenue/monthly', icon: BarChart3 },
-  { name: 'الإعدادات', href: '/manage/settings', icon: Settings },
-];
+function LanguageToggle() {
+  const { lang, setLang } = useLang();
+  return (
+    <button
+      onClick={() => setLang(lang === 'ar' ? 'he' : 'ar')}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border border-border/50 hover:bg-secondary hover:border-primary/30 transition-all"
+      title="שנה שפה / تغيير اللغة"
+    >
+      <span className="text-sm">{lang === 'ar' ? '🇮🇱 עברית' : '🇸🇦 عربي'}</span>
+    </button>
+  );
+}
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const { data: user, isLoading } = useGetMe({ query: { retry: false } });
   const logoutMutation = useLogout();
+  const { t } = useLang();
 
-  // Guard
+  const navItems = [
+    { name: t.admin.dashboard, href: '/manage/dashboard', icon: LayoutDashboard },
+    { name: t.admin.orders, href: '/manage/orders', icon: ShoppingBag },
+    { name: t.admin.products, href: '/manage/products', icon: PackageOpen },
+    { name: t.admin.revenueDaily, href: '/manage/revenue/daily', icon: CalendarDays },
+    { name: t.admin.revenueMonthly, href: '/manage/revenue/monthly', icon: BarChart3 },
+    { name: t.admin.sessions, href: '/manage/sessions', icon: MonitorSmartphone },
+    { name: t.admin.settings, href: '/manage/settings', icon: Settings },
+  ];
+
   React.useEffect(() => {
     if (!isLoading && (!user || user.role !== 'admin')) {
       setLocation('/manage/login');
     }
   }, [user, isLoading, setLocation]);
 
-  if (isLoading || !user) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" /></div>;
+  if (isLoading || !user) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+    </div>
+  );
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync();
@@ -40,7 +59,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         <div className="p-6 flex items-center justify-center border-b border-border/50">
           <Link href="/" className="flex flex-col items-center gap-2 group">
             <img src={`${import.meta.env.BASE_URL}images/lecker-logo.png`} alt="Lecker" className="h-16 w-16 object-contain drop-shadow-lg" />
-            <span className="text-xl font-bold text-gold-gradient">إدارة ليكير</span>
+            <span className="text-xl font-bold text-gold-gradient">{t.admin.title}</span>
           </Link>
         </div>
 
@@ -59,9 +78,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-border/50">
+        <div className="p-4 border-t border-border/50 space-y-2">
+          <LanguageToggle />
           <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-3 text-destructive hover:bg-destructive/10 rounded-xl transition-colors font-medium">
-            <LogOut className="w-5 h-5" /> تسجيل الخروج
+            <LogOut className="w-5 h-5" /> {t.admin.logout}
           </button>
         </div>
       </aside>
@@ -70,10 +90,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Mobile Header */}
         <header className="lg:hidden h-16 border-b border-border/50 glass-panel flex items-center justify-between px-4 z-20">
-          <span className="text-lg font-bold text-primary">إدارة ليكير</span>
-          <button onClick={handleLogout} className="p-2 text-destructive"><LogOut className="w-5 h-5"/></button>
+          <span className="text-lg font-bold text-primary">{t.admin.title}</span>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <button onClick={handleLogout} className="p-2 text-destructive"><LogOut className="w-5 h-5"/></button>
+          </div>
         </header>
-        
+
         <div className="flex-1 overflow-auto p-4 sm:p-8">
           <motion.div
             key={location}

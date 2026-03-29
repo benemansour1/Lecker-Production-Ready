@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { db, usersTable, adminSessionsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
 import twilio from "twilio";
 
 const router: IRouter = Router();
@@ -15,13 +15,58 @@ async function sendSms(to: string, body: string): Promise<void> {
   const fromPhone = process.env["TWILIO_PHONE_NUMBER"];
 
   if (!accountSid || !authToken || !fromPhone) {
-    // Twilio not configured - log OTP for development
     console.log(`[OTP for ${to}]: ${body}`);
     return;
   }
 
   const client = twilio(accountSid, authToken);
   await client.messages.create({ body, from: fromPhone, to });
+}
+
+function parseUserAgent(ua: string): { deviceType: string; browser: string; os: string } {
+  const lc = ua.toLowerCase();
+  let deviceType = 'desktop';
+  if (/mobile|iphone|android|blackberry|windows phone/.test(lc)) deviceType = 'mobile';
+  else if (/ipad|tablet/.test(lc)) deviceType = 'tablet';
+
+  let browser = 'Unknown';
+  if (/edg\//.test(lc)) browser = 'Edge';
+  else if (/opr\/|opera/.test(lc)) browser = 'Opera';
+  else if (/chrome/.test(lc)) browser = 'Chrome';
+  else if (/safari/.test(lc)) browser = 'Safari';
+  else if (/firefox/.test(lc)) browser = 'Firefox';
+
+  let os = 'Unknown';
+  if (/windows/.test(lc)) os = 'Windows';
+  else if (/mac os x/.test(lc)) os = 'macOS';
+  else if (/android/.test(lc)) os = 'Android';
+  else if (/iphone|ipad|ios/.test(lc)) os = 'iOS';
+  else if (/linux/.test(lc)) os = 'Linux';
+
+  return { deviceType, browser, os };
+}
+
+function getClientIp(req: any): string {
+  const fwd = req.headers['x-forwarded-for'];
+  if (fwd) {
+    const first = (typeof fwd === 'string' ? fwd : fwd[0]).split(',')[0].trim();
+    return first;
+  }
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+async function fetchGeoCity(ip: string): Promise<{ city: string | null; country: string | null }> {
+  try {
+    if (ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168') || ip.startsWith('10.')) {
+      return { city: 'محلي', country: 'local' };
+    }
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=city,country,status&lang=ar`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    const data = await res.json() as any;
+    if (data.status === 'success') return { city: data.city || null, country: data.country || null };
+  } catch {}
+  return { city: null, country: null };
 }
 
 router.post("/send-otp", async (req, res) => {
@@ -100,6 +145,36 @@ router.post("/verify-otp", async (req, res) => {
     (req.session as any).userId = user.id;
     (req.session as any).role = user.role;
 
+    // Record admin session in DB
+    if (user.role === 'admin') {
+      const ua = req.headers['user-agent'] || '';
+      const { deviceType, browser, os } = parseUserAgent(ua);
+      const ip = getClientIp(req);
+
+      // Fire-and-forget geo lookup
+      fetchGeoCity(ip).then(async ({ city, country }) => {
+        try {
+          // Mark old sessions for same phone+device combo as inactive
+          await db.insert(adminSessionsTable).values({
+            sessionId: req.sessionID,
+            phone: user.phone,
+            ipAddress: ip,
+            userAgent: ua.substring(0, 500),
+            deviceType,
+            browser,
+            os,
+            city,
+            country,
+            loginAt: new Date(),
+            lastActiveAt: new Date(),
+            isActive: true,
+          });
+        } catch (e) {
+          console.error('[admin-session] insert error', e);
+        }
+      });
+    }
+
     const { otpCode, otpExpiresAt, ...safeUser } = user;
     res.json({
       user: { ...safeUser, createdAt: safeUser.createdAt.toISOString() },
@@ -111,15 +186,31 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-router.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      res.status(500).json({ error: "حدث خطأ أثناء تسجيل الخروج" });
-      return;
+router.post("/logout", async (req, res) => {
+  try {
+    const sessionId = req.sessionID;
+    const role = (req.session as any).role;
+
+    // Mark admin session as inactive
+    if (role === 'admin' && sessionId) {
+      db.update(adminSessionsTable)
+        .set({ isActive: false })
+        .where(and(eq(adminSessionsTable.sessionId, sessionId), eq(adminSessionsTable.isActive, true)))
+        .catch(() => {});
     }
-    res.clearCookie("connect.sid");
-    res.json({ message: "تم تسجيل الخروج بنجاح" });
-  });
+
+    req.session.destroy((err) => {
+      if (err) {
+        res.status(500).json({ error: "حدث خطأ أثناء تسجيل الخروج" });
+        return;
+      }
+      res.clearCookie("connect.sid");
+      res.json({ message: "تم تسجيل الخروج بنجاح" });
+    });
+  } catch (err) {
+    req.log.error({ err }, "Error in logout");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
 });
 
 router.get("/me", async (req, res) => {

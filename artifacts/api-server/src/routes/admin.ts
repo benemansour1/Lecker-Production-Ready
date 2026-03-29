@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { db, productsTable, ordersTable, settingsTable } from "@workspace/db";
-import { eq, asc } from "drizzle-orm";
+import { db, productsTable, ordersTable, settingsTable, adminSessionsTable, sessionsTable } from "@workspace/db";
+import { eq, asc, and, desc } from "drizzle-orm";
 import { requireAdmin } from "../middlewares/auth";
 import { sendSms } from "../lib/sms";
 
@@ -26,7 +26,7 @@ router.get("/products", async (req, res) => {
 
 router.post("/products", async (req, res) => {
   try {
-    const { name, nameAr, category, price, description, imageUrl, isActive, sortOrder } = req.body;
+    const { name, nameAr, nameHe, category, price, description, imageUrl, isActive, sortOrder } = req.body;
 
     if (!name || !nameAr || !category || price === undefined) {
       res.status(400).json({ error: "البيانات المطلوبة غير مكتملة" });
@@ -36,6 +36,7 @@ router.post("/products", async (req, res) => {
     const inserted = await db.insert(productsTable).values({
       name,
       nameAr,
+      nameHe: nameHe || null,
       category,
       price: price.toString(),
       description: description || null,
@@ -55,11 +56,12 @@ router.post("/products", async (req, res) => {
 router.put("/products/:id", async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, nameAr, category, price, description, imageUrl, isActive, sortOrder } = req.body;
+    const { name, nameAr, nameHe, category, price, description, imageUrl, isActive, sortOrder } = req.body;
 
     const updated = await db.update(productsTable).set({
       ...(name !== undefined && { name }),
       ...(nameAr !== undefined && { nameAr }),
+      ...(nameHe !== undefined && { nameHe }),
       ...(category !== undefined && { category }),
       ...(price !== undefined && { price: price.toString() }),
       ...(description !== undefined && { description }),
@@ -359,6 +361,80 @@ router.put("/settings", async (req, res) => {
     res.json(parseSettings(rows));
   } catch (err) {
     req.log.error({ err }, "Error updating settings");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
+});
+
+// ─── Admin Sessions / Devices ────────────────────────────────────────────────
+
+router.get("/sessions", async (req, res) => {
+  try {
+    const sessions = await db.select()
+      .from(adminSessionsTable)
+      .where(eq(adminSessionsTable.isActive, true))
+      .orderBy(desc(adminSessionsTable.lastActiveAt));
+
+    const currentSessionId = req.sessionID;
+
+    res.json(sessions.map(s => ({
+      id: s.id,
+      sessionId: s.sessionId,
+      phone: s.phone,
+      ipAddress: s.ipAddress,
+      deviceType: s.deviceType,
+      browser: s.browser,
+      os: s.os,
+      city: s.city,
+      country: s.country,
+      loginAt: s.loginAt.toISOString(),
+      lastActiveAt: s.lastActiveAt.toISOString(),
+      isCurrent: s.sessionId === currentSessionId,
+    })));
+  } catch (err) {
+    req.log.error({ err }, "Error fetching admin sessions");
+    res.status(500).json({ error: "حدث خطأ" });
+  }
+});
+
+router.post("/sessions/heartbeat", async (req, res) => {
+  try {
+    const sessionId = req.sessionID;
+    await db.update(adminSessionsTable)
+      .set({ lastActiveAt: new Date() })
+      .where(and(eq(adminSessionsTable.sessionId, sessionId), eq(adminSessionsTable.isActive, true)));
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: "حدث خطأ" });
+  }
+});
+
+router.delete("/sessions/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const sessions = await db.select().from(adminSessionsTable).where(eq(adminSessionsTable.id, id));
+    const session = sessions[0];
+
+    if (!session) {
+      res.status(404).json({ error: "الجلسة غير موجودة" });
+      return;
+    }
+
+    if (session.sessionId === req.sessionID) {
+      res.status(400).json({ error: "لا يمكنك تسجيل الخروج من جلستك الحالية هنا" });
+      return;
+    }
+
+    // Delete the Express session from the sessions table
+    await db.delete(sessionsTable).where(eq(sessionsTable.sid, session.sessionId)).catch(() => {});
+
+    // Mark admin session record as inactive
+    await db.update(adminSessionsTable)
+      .set({ isActive: false })
+      .where(eq(adminSessionsTable.id, id));
+
+    res.json({ message: "تم تسجيل الخروج بنجاح" });
+  } catch (err) {
+    req.log.error({ err }, "Error force-logging out session");
     res.status(500).json({ error: "حدث خطأ" });
   }
 });

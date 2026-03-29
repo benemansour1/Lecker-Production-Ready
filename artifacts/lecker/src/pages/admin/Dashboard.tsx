@@ -5,23 +5,25 @@ import { Card } from '@/components/ui-elements';
 import { ShoppingBag, DollarSign, PackageOpen, TrendingUp } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useLang } from '@/i18n';
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = useGetAdminStats();
+  const { t } = useLang();
 
   const STAT_CARDS = [
-    { title: 'إيرادات اليوم', value: formatPrice(stats?.todayRevenue || 0), icon: DollarSign, color: 'text-primary', bg: 'bg-primary/10' },
-    { title: 'طلبات اليوم', value: stats?.todayOrders || 0, icon: ShoppingBag, color: 'text-blue-400', bg: 'bg-blue-400/10' },
-    { title: 'طلبات قيد الانتظار', value: stats?.pendingOrders || 0, icon: PackageOpen, color: 'text-amber-400', bg: 'bg-amber-400/10' },
-    { title: 'إيرادات الشهر', value: formatPrice(stats?.monthRevenue || 0), icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+    { title: t.admin.todayRevenue, value: formatPrice(stats?.todayRevenue || 0), icon: DollarSign, color: 'text-primary', bg: 'bg-primary/10' },
+    { title: t.admin.todayOrders, value: stats?.todayOrders || 0, icon: ShoppingBag, color: 'text-blue-400', bg: 'bg-blue-400/10' },
+    { title: t.admin.pendingOrders, value: stats?.pendingOrders || 0, icon: PackageOpen, color: 'text-amber-400', bg: 'bg-amber-400/10' },
+    { title: t.admin.monthRevenue, value: formatPrice(stats?.monthRevenue || 0), icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
   ];
 
   return (
     <AdminLayout>
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gold-gradient">نظرة عامة</h1>
-          <p className="text-muted-foreground mt-1">مرحباً بك في لوحة تحكم متجر ليكير</p>
+          <h1 className="text-3xl font-bold text-gold-gradient">{t.admin.overview}</h1>
+          <p className="text-muted-foreground mt-1">{t.admin.welcomeBack}</p>
         </div>
       </div>
 
@@ -47,18 +49,17 @@ export default function AdminDashboard() {
           </motion.div>
         ))}
       </div>
-      
-      {/* Quick Actions / Info could go here */}
+
       <div className="mt-12 grid lg:grid-cols-2 gap-8">
         <Card className="p-6">
-          <h2 className="text-xl font-bold border-b border-border/50 pb-4 mb-4">إحصائيات إضافية</h2>
+          <h2 className="text-xl font-bold border-b border-border/50 pb-4 mb-4">{t.admin.additionalStats}</h2>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">إجمالي المنتجات النشطة</span>
+              <span className="text-muted-foreground">{t.admin.totalActiveProducts}</span>
               <span className="font-bold text-lg">{stats?.totalProducts || 0}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">إجمالي الطلبات (تاريخياً)</span>
+              <span className="text-muted-foreground">{t.admin.totalOrdersHistory}</span>
               <span className="font-bold text-lg">{stats?.totalOrders || 0}</span>
             </div>
           </div>

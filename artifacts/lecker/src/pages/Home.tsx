@@ -9,8 +9,9 @@ import { formatPrice } from '@/lib/utils';
 import { Plus, ShoppingCart, X, MoonStar } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useLang } from '@/i18n';
 
-const CATEGORIES = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'أكل', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'حلويات خاصة'];
+const CATEGORIES_DB = ['الكل', 'بانكيك', 'كريب', 'وافل', 'بوظة', 'أكل', 'مشروبات ساخنة', 'مشروبات باردة', 'بيرا', 'حلويات خاصة'];
 
 const CATEGORY_EMOJI: Record<string, string> = {
   'بانكيك': '🥞',
@@ -24,16 +25,23 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'حلويات خاصة': '🍫',
 };
 
-// Variant selector dialog
+function getProductName(product: Product, lang: string): string {
+  if (lang === 'he' && (product as any).nameHe) return (product as any).nameHe;
+  return product.nameAr;
+}
+
 function VariantDialog({
   product,
   onSelect,
   onClose,
+  lang,
 }: {
   product: Product;
   onSelect: (variant: ProductVariant) => void;
   onClose: () => void;
+  lang: string;
 }) {
+  const { t } = useLang();
   const variants = (product.variants as ProductVariant[] | null) ?? [];
   return (
     <AnimatePresence>
@@ -53,12 +61,12 @@ function VariantDialog({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-5">
-            <h3 className="text-xl font-bold">{product.nameAr}</h3>
+            <h3 className="text-xl font-bold">{getProductName(product, lang)}</h3>
             <button onClick={onClose} className="p-2 rounded-full hover:bg-secondary transition-colors">
               <X className="w-5 h-5" />
             </button>
           </div>
-          <p className="text-muted-foreground text-sm mb-5">اختر الحجم أو النوع</p>
+          <p className="text-muted-foreground text-sm mb-5">{t.home.chooseSize}</p>
           <div className="space-y-3">
             {variants.map((v) => (
               <button
@@ -80,6 +88,7 @@ function VariantDialog({
 export default function Home() {
   const [activeCategory, setActiveCategory] = useState('الكل');
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
+  const { t, lang } = useLang();
 
   const { data: products, isLoading } = useGetProducts(
     activeCategory === 'الكل' ? {} : { category: activeCategory }
@@ -101,7 +110,7 @@ export default function Home() {
 
   const handleAddToCart = (product: Product) => {
     if (storeSettings && !storeSettings.isOpen) {
-      toast({ title: '🔒 المتجر مغلق', description: 'عذراً، المتجر غير متاح حالياً', variant: 'destructive', duration: 3000 });
+      toast({ title: t.home.storeClosedToast, description: t.home.storeClosedToastDesc, variant: 'destructive', duration: 3000 });
       return;
     }
     const variants = (product.variants as ProductVariant[] | null) ?? [];
@@ -109,7 +118,7 @@ export default function Home() {
       setVariantProduct(product);
     } else {
       addItem(product);
-      toast({ title: '✓ تمت الإضافة للسلة', description: product.nameAr, duration: 2000 });
+      toast({ title: t.home.addedToCart, description: getProductName(product, lang), duration: 2000 });
     }
   };
 
@@ -117,8 +126,8 @@ export default function Home() {
     if (!variantProduct) return;
     addItem(variantProduct, 1, variant);
     toast({
-      title: '✓ تمت الإضافة للسلة',
-      description: `${variantProduct.nameAr} — ${variant.nameAr}`,
+      title: t.home.addedToCart,
+      description: `${getProductName(variantProduct, lang)} — ${variant.nameAr}`,
       duration: 2000,
     });
     setVariantProduct(null);
@@ -146,9 +155,9 @@ export default function Home() {
               <div className="w-24 h-24 mx-auto mb-6 bg-secondary rounded-full flex items-center justify-center border border-border">
                 <MoonStar className="w-12 h-12 text-muted-foreground" />
               </div>
-              <h2 className="text-3xl font-bold mb-3">المتجر مغلق</h2>
-              <p className="text-muted-foreground text-lg">عذراً، المتجر غير متاح حالياً.</p>
-              <p className="text-muted-foreground text-sm mt-2">سنعود قريباً إن شاء الله ✨</p>
+              <h2 className="text-3xl font-bold mb-3">{t.home.storeClosed}</h2>
+              <p className="text-muted-foreground text-lg">{t.home.storeClosedDesc}</p>
+              <p className="text-muted-foreground text-sm mt-2">{t.home.storeClosedSoon}</p>
             </motion.div>
           </motion.div>
         )}
@@ -160,35 +169,36 @@ export default function Home() {
           product={variantProduct}
           onSelect={handleVariantSelect}
           onClose={() => setVariantProduct(null)}
+          lang={lang}
         />
       )}
 
       {/* Hero Section */}
       <div className="relative rounded-3xl overflow-hidden mb-12 h-64 sm:h-80 shadow-2xl shadow-black/50 border border-border/50 group">
-        <img 
-          src={`${import.meta.env.BASE_URL}images/hero-bg.png`} 
-          alt="Hero" 
+        <img
+          src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
+          alt="Hero"
           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent flex items-center p-8 sm:p-12">
           <div className="max-w-xl">
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="text-4xl sm:text-5xl font-bold text-gold-gradient mb-4 drop-shadow-lg"
             >
-              لحظة حلوة تستحق ✨
+              {t.home.hero}
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="text-lg sm:text-xl text-muted-foreground mb-2"
             >
-              من يد الشيف مباشرةً لقلبك، بأجود المكونات الطازجة 🍫
+              {t.home.heroSub}
             </motion.p>
             <motion.p
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="text-sm sm:text-base text-primary/70 font-medium tracking-wide"
             >
-              بانكيك &nbsp;•&nbsp; كريب &nbsp;•&nbsp; وافل &nbsp;•&nbsp; بوظة &nbsp;•&nbsp; حلويات خاصة
+              {t.categories['بانكيك']} &nbsp;•&nbsp; {t.categories['كريب']} &nbsp;•&nbsp; {t.categories['وافل']} &nbsp;•&nbsp; {t.categories['بوظة']} &nbsp;•&nbsp; {t.categories['حلويات خاصة']}
             </motion.p>
           </div>
         </div>
@@ -196,21 +206,24 @@ export default function Home() {
 
       {/* Categories */}
       <div className="flex flex-wrap gap-2 mb-8">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={cn(
-              'whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2',
-              activeCategory === cat 
-                ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105' 
-                : 'bg-secondary text-secondary-foreground hover:bg-primary/20 hover:text-primary'
-            )}
-          >
-            {CATEGORY_EMOJI[cat] && <span>{CATEGORY_EMOJI[cat]}</span>}
-            {cat}
-          </button>
-        ))}
+        {CATEGORIES_DB.map((cat) => {
+          const displayLabel = cat === 'الكل' ? t.categories.all : (t.categories[cat as keyof typeof t.categories] || cat);
+          return (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={cn(
+                'whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-300 flex items-center gap-2',
+                activeCategory === cat
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105'
+                  : 'bg-secondary text-secondary-foreground hover:bg-primary/20 hover:text-primary'
+              )}
+            >
+              {CATEGORY_EMOJI[cat] && <span>{CATEGORY_EMOJI[cat]}</span>}
+              {displayLabel}
+            </button>
+          );
+        })}
       </div>
 
       {/* Products Grid */}
@@ -223,13 +236,14 @@ export default function Home() {
       ) : products?.length === 0 ? (
         <div className="text-center py-20 bg-secondary/30 rounded-3xl border border-dashed border-border">
           <ShoppingCart className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
-          <h3 className="text-xl font-bold text-foreground">لا توجد منتجات</h3>
-          <p className="text-muted-foreground mt-2">عذراً، لا يوجد منتجات في هذا التصنيف حالياً.</p>
+          <h3 className="text-xl font-bold text-foreground">{t.home.noProducts}</h3>
+          <p className="text-muted-foreground mt-2">{t.home.noProductsDesc}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {products?.map((product, idx) => {
             const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
+            const displayName = getProductName(product, lang);
             return (
               <motion.div
                 key={product.id}
@@ -240,7 +254,7 @@ export default function Home() {
                 <Card className="h-full flex flex-col group border-transparent hover:border-primary/50 transition-all duration-300 overflow-hidden">
                   <div className="relative aspect-square bg-secondary/50 overflow-hidden">
                     {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.nameAr} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                      <img src={product.imageUrl} alt={displayName} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary/80 to-background/60">
                         <span className="text-5xl drop-shadow-lg select-none">
@@ -249,22 +263,22 @@ export default function Home() {
                       </div>
                     )}
                     <div className="absolute top-2 end-2 bg-background/85 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-bold text-primary border border-primary/20 shadow">
-                      {hasVariants ? `من ${formatPrice((product.variants as any[])[0].price)}` : formatPrice(product.price)}
+                      {hasVariants ? `${lang === 'he' ? 'מ-' : 'من '} ${formatPrice((product.variants as any[])[0].price)}` : formatPrice(product.price)}
                     </div>
                     {hasVariants && (
                       <div className="absolute top-2 start-2 bg-amber-500/90 px-2 py-0.5 rounded-full text-xs font-bold text-background">
-                        اختر حجم
+                        {t.home.chooseSize2}
                       </div>
                     )}
                   </div>
                   <div className="p-3 flex flex-col flex-1">
-                    <h3 className="text-sm font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-snug flex-1">{product.nameAr}</h3>
+                    <h3 className="text-sm font-bold text-foreground mb-3 group-hover:text-primary transition-colors line-clamp-2 leading-snug flex-1">{displayName}</h3>
                     <button
                       onClick={() => handleAddToCart(product)}
                       className="w-full mt-auto flex items-center justify-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold border border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200 group-hover:shadow-md group-hover:shadow-primary/20"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      {hasVariants ? 'اختر وأضف' : 'إضافة للسلة'}
+                      {hasVariants ? t.home.chooseAdd : t.home.addToCart}
                     </button>
                   </div>
                 </Card>

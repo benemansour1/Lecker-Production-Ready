@@ -4,12 +4,27 @@ import { ShoppingBag, User, LogOut, Package } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
 import { useGetMe, useLogout } from '@workspace/api-client-react';
 import { motion } from 'framer-motion';
+import { useLang } from '@/i18n';
+
+function LanguageToggle() {
+  const { lang, setLang } = useLang();
+  return (
+    <button
+      onClick={() => setLang(lang === 'ar' ? 'he' : 'ar')}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-bold border border-border/50 hover:bg-secondary hover:border-primary/30 transition-all"
+      title="שנה שפה / تغيير اللغة"
+    >
+      {lang === 'ar' ? '🇮🇱 עברית' : '🇸🇦 عربي'}
+    </button>
+  );
+}
 
 export function CustomerLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const cartCount = useCart((s) => s.getItemCount());
   const { data: user } = useGetMe({ query: { retry: false } });
   const logoutMutation = useLogout();
+  const { t } = useLang();
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync();
@@ -23,14 +38,16 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <img src={`${import.meta.env.BASE_URL}images/lecker-logo.png`} alt="Lecker" className="h-12 w-12 object-contain group-hover:scale-110 transition-transform" />
-            <span className="text-2xl font-bold text-gold-gradient">ليكير</span>
+            <span className="text-2xl font-bold text-gold-gradient">{t.store}</span>
           </Link>
 
-          <div className="flex items-center gap-4 sm:gap-6">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <LanguageToggle />
+
             <Link href="/cart" className="relative p-2 text-foreground hover:text-primary transition-colors">
               <ShoppingBag className="w-6 h-6" />
               {cartCount > 0 && (
-                <motion.span 
+                <motion.span
                   initial={{ scale: 0 }} animate={{ scale: 1 }}
                   className="absolute -top-1 -end-1 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-md shadow-primary/40"
                 >
@@ -40,13 +57,13 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
             </Link>
 
             {user ? (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <Link href="/orders" className="text-sm font-medium hover:text-primary transition-colors hidden sm:flex items-center gap-2">
-                  <Package className="w-4 h-4" /> طلباتي
+                  <Package className="w-4 h-4" /> {t.nav.myOrders}
                 </Link>
                 {user.role === 'admin' && (
                   <Link href="/manage/dashboard" className="text-sm font-medium text-accent hover:text-primary transition-colors hidden sm:block">
-                    لوحة الإدارة
+                    {t.nav.adminPanel}
                   </Link>
                 )}
                 <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-destructive transition-colors">
@@ -55,7 +72,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
               </div>
             ) : (
               <Link href="/login" className="flex items-center gap-2 px-4 py-2 bg-secondary rounded-xl text-sm font-bold hover:bg-primary/20 hover:text-primary transition-colors">
-                <User className="w-4 h-4" /> دخول
+                <User className="w-4 h-4" /> {t.nav.login}
               </Link>
             )}
           </div>
@@ -77,8 +94,8 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
 
       {/* Footer */}
       <footer className="mt-auto border-t border-border/50 bg-background/50 py-8 text-center text-muted-foreground text-sm space-y-1">
-        <p>© {new Date().getFullYear()} ليكير للحلويات. جميع الحقوق محفوظة.</p>
-        <p className="text-xs opacity-60">تصميم وتطوير <span className="font-medium">bene_mansour</span></p>
+        <p>© {new Date().getFullYear()} {t.footer.rights}</p>
+        <p className="text-xs opacity-60">{t.footer.credit} <span className="font-medium">bene_mansour</span></p>
       </footer>
     </div>
   );

@@ -32,6 +32,7 @@ const seedDataPath = path.join(__dirname, "seed-data.json");
 const seedProducts: Array<{
   name: string;
   name_ar: string;
+  name_he?: string | null;
   category: string;
   price: string;
   description: string | null;
@@ -61,6 +62,7 @@ async function seed() {
     await db.insert(productsTable).values({
       name: p.name,
       nameAr: p.name_ar,
+      nameHe: p.name_he ?? null,
       category: p.category,
       price: p.price,
       description: p.description,

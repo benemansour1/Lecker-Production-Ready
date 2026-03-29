@@ -101,40 +101,61 @@ Utility scripts package. Each script is a `.ts` file in `src/` with a correspond
 
 ---
 
-## Lecker – Arabic Candy Store App
+## Lecker – Arabic/Hebrew Candy Store App (ليكير)
 
 ### Features Implemented
 
 **Customer Storefront (`artifacts/lecker/src/pages/`)**
-- RTL Arabic UI with `Tajawal` font only (no `Aref Ruqaa`), numbers in `en-IL` locale
-- Product browsing with emoji placeholder for products without images
-- Cart with toast notification on add (from `Home.tsx`)
+- Full bilingual AR/HE support — both RTL; toggle stored in `lecker-lang` localStorage key
+- `LanguageProvider` context + `useLang()` hook; `LanguageToggle` in both layouts
+- Product browsing with `getProductName(product, lang)` helper (uses `nameHe || nameAr`)
+- Cart with toast notification on add; cart key `'lecker-cart-v2'`; cartKey = `"productId"` or `"productId|variantName"`
 - Checkout (`Checkout.tsx`): delivery vs pickup toggle, +15 ILS delivery fee, address field, payment method (cash/online)
-- Login with OTP via `Login.tsx`; admin login at `/admin/login` via `AdminLogin.tsx`
+- Login with OTP via `Login.tsx`; admin login at `/manage/login` (secret path)
 - My orders page (`Orders.tsx`)
+- Footer: "تصميم وتطوير bene_mansour"
 
 **Admin Dashboard (`artifacts/lecker/src/pages/admin/`)**
-- Dashboard with stats (today orders/revenue, pending orders, total products)
-- Orders (`Orders.tsx`): card-based view with full detail expand (items list, delivery type, address, notes, payment), status dropdown with sound alert (Web Audio API) when new orders arrive via 30s polling, status filter tabs
-- Products (`Products.tsx`): table with quick power-toggle button (green=active / red=disabled), edit/delete dialogs
+- Dashboard with stats (today orders/revenue, pending orders, total products) — bilingual
+- Orders (`Orders.tsx`): card-based view with full detail expand, sound alert on new orders via 30s polling, status filter tabs
+- Products (`Products.tsx`): table with power-toggle button, edit/delete dialogs
 - Revenue pages (daily + monthly charts)
 - Settings page (store open/closed, delivery fee, min order, contact info)
+- Sessions/Devices (`Sessions.tsx`): real-time active admin session monitoring
+  - Heartbeat every 8s, polling every 6s; online = <15s, idle = <5min, offline = older
+  - Shows device (UA parser), OS, browser, location (ip-api.com), IP, login time
+  - Force-logout button deletes Express session + marks admin_sessions.isActive=false
 
 **Backend (`artifacts/api-server/src/routes/`)**
-- `auth.ts`: OTP login with Twilio SMS (falls back to console.log without env vars); admin guard checks `ADMIN_PHONE_NUMBER`
-- `orders.ts`: create order → validates stock, calculates total + 15 ILS delivery fee, notifies admin via SMS on new order
-- `admin.ts`: all CRUD for products/orders/settings; `PATCH /admin/products/:id/toggle` for quick enable/disable; sends SMS to customer on status change (preparing/ready/delivered/cancelled)
-- `lib/sms.ts`: shared SMS utility (Twilio if configured, otherwise console.log)
+- `auth.ts`: OTP login with Twilio SMS; records admin session on login (async geo fetch); marks inactive on logout
+- `orders.ts`: create order → validates, calculates total + delivery fee, SMS notification
+- `admin.ts`: CRUD for products/orders/settings; GET/POST heartbeat/DELETE session endpoints
+- `lib/sms.ts`: shared SMS utility (Twilio if configured, else console.log)
 
 **DB Schema (`lib/db/src/schema/`)**
-- `orders`: includes `deliveryType` (delivery/pickup), `deliveryAddress`, `items` (JSON), `paymentMethod`, `notes`
-- `products`: `isActive` for enable/disable toggle
+- `orders`: `deliveryType`, `deliveryAddress`, `items` (JSON), `paymentMethod`, `notes`
+- `products`: `isActive`, `nameHe` (nullable Hebrew name column)
+- `admin_sessions`: tracks admin login sessions (id, sessionId, phone, userAgent, ip, country, city, lastSeen, isActive, loginAt)
+- `settings`: key-value store for store config
+
+**i18n Files (`artifacts/lecker/src/i18n/`)**
+- `ar.ts` — Arabic translations (source of truth for all keys)
+- `he.ts` — Hebrew translations (must mirror all keys from ar.ts)
+- `index.tsx` — `LanguageProvider`, `useLang()`, `LanguageToggle`
+
+**Seed Data**
+- `lib/db/src/seed-data.json` — 51 products with `name_ar` + `name_he` fields
+- `lib/db/src/seed.ts` — maps to DB schema; skips if already seeded
+- `pnpm --filter @workspace/db run setup` — push schema + seed (first-time setup)
 
 **Environment Variables Needed**
-- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` — Twilio SMS (optional; without these, OTP is shown in API response)
+- `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` — Twilio SMS (optional; without these, OTP shown in API response)
 - `ADMIN_PHONE_NUMBER` — phone to receive new-order SMS notifications
 - `SESSION_SECRET` — session signing key (already set)
 - `DATABASE_URL` — automatically provided by Replit
+
+**Categories (DB values — always sent to backend in Arabic)**
+`['الكل','بانكيك','كريب','وافل','بوظة','أكل','مشروبات ساخنة','مشروبات باردة','بيرا','حلويات خاصة']`
 
 **OpenAPI + Codegen**
 - After changing `lib/api-spec/openapi.yaml`, run: `pnpm --filter @workspace/api-spec run codegen`
