@@ -22,7 +22,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   // Guard
   React.useEffect(() => {
     if (!isLoading && (!user || user.role !== 'admin')) {
-      setLocation('/login');
+      setLocation('/admin/login');
     }
   }, [user, isLoading, setLocation]);
 

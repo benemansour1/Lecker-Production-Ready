@@ -11,6 +11,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import Orders from "./pages/Orders";
+import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminOrders from "./pages/admin/Orders";
 import AdminProducts from "./pages/admin/Products";
@@ -31,10 +32,8 @@ function Router() {
       <Route path="/orders" component={Orders} />
       
       {/* Admin Routes */}
-      <Route path="/admin">
-        {/* Redirect admin root to dashboard */}
-        {() => { window.location.href = (import.meta.env.BASE_URL || '/') + 'admin/dashboard'; return null; }}
-      </Route>
+      <Route path="/admin" component={AdminLogin} />
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/admin/products" component={AdminProducts} />

@@ -3,6 +3,7 @@ import { useGetProducts } from '@workspace/api-client-react';
 import { CustomerLayout } from '@/components/layout/CustomerLayout';
 import { Button, Card } from '@/components/ui-elements';
 import { useCart } from '@/hooks/use-cart';
+import { useToast } from '@/hooks/use-toast';
 import { formatPrice } from '@/lib/utils';
 import { Plus, ShoppingCart } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -18,6 +19,16 @@ export default function Home() {
   );
 
   const { addItem } = useCart();
+  const { toast } = useToast();
+
+  const handleAddToCart = (product: Parameters<typeof addItem>[0]) => {
+    addItem(product);
+    toast({
+      title: '✓ تمت الإضافة للسلة',
+      description: product.nameAr,
+      duration: 2000,
+    });
+  };
 
   return (
     <CustomerLayout>
@@ -102,7 +113,7 @@ export default function Home() {
                   <h3 className="text-lg font-bold text-foreground mb-1 group-hover:text-primary transition-colors">{product.nameAr}</h3>
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">{product.description}</p>
                   <Button 
-                    onClick={() => addItem(product)} 
+                    onClick={() => handleAddToCart(product)} 
                     variant="outline" 
                     className="w-full mt-auto rounded-full border-primary/30 hover:border-primary hover:bg-primary hover:text-primary-foreground group-hover:shadow-lg group-hover:shadow-primary/20"
                   >
