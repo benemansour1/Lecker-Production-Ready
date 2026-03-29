@@ -2,9 +2,9 @@ import React from 'react';
 import { Link, useLocation } from 'wouter';
 import { ShoppingBag, User, LogOut, Package } from 'lucide-react';
 import { useCart } from '@/hooks/use-cart';
-import { useGetMe, useLogout } from '@workspace/api-client-react';
 import { motion } from 'framer-motion';
 import { useLang } from '@/i18n';
+import { useAuth } from '@/lib/auth-context';
 
 function LanguageToggle() {
   const { lang, setLang } = useLang();
@@ -22,18 +22,16 @@ function LanguageToggle() {
 export function CustomerLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const cartCount = useCart((s) => s.getItemCount());
-  const { data: user } = useGetMe({ query: { retry: false } });
-  const logoutMutation = useLogout();
+  const { user, logout } = useAuth();
   const { t } = useLang();
 
-  const handleLogout = async () => {
-    await logoutMutation.mutateAsync();
-    window.location.reload();
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/';
   };
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
       <header className="sticky top-0 z-40 glass-panel border-b-0 border-x-0 rounded-b-3xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
@@ -79,8 +77,7 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div
           key={location}
           initial={{ opacity: 0, y: 20 }}
@@ -92,7 +89,6 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
         </motion.div>
       </main>
 
-      {/* Footer */}
       <footer className="mt-auto border-t border-border/50 bg-background/50 py-8 text-center text-muted-foreground text-sm space-y-1">
         <p>© {new Date().getFullYear()} {t.footer.rights}</p>
         <p className="text-xs opacity-60">{t.footer.credit} <span className="font-medium">bene_mansour</span></p>

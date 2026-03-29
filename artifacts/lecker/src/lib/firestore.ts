@@ -16,6 +16,7 @@ import {
   type DocumentData,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { MOCK_PRODUCTS } from "./mock-products";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,23 +133,40 @@ function docToOrder(d: DocumentData & { id: string }): Order {
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export async function getProducts(category?: string): Promise<Product[]> {
-  const col = collection(db, "products");
-  const q = query(col, orderBy("sortOrder", "asc"));
-  const snap = await getDocs(q);
-  const products = snap.docs
-    .map((d) => docToProduct({ id: d.id, ...d.data() }))
-    .filter((p) => p.isActive);
-  if (category && category !== "الكل") {
-    return products.filter((p) => p.category === category);
+  try {
+    const col = collection(db, "products");
+    const q = query(col, orderBy("sortOrder", "asc"));
+    const snap = await getDocs(q);
+    let products = snap.docs
+      .map((d) => docToProduct({ id: d.id, ...d.data() }))
+      .filter((p) => p.isActive);
+    if (products.length === 0) {
+      products = MOCK_PRODUCTS.filter((p) => p.isActive);
+    }
+    if (category && category !== "الكل") {
+      return products.filter((p) => p.category === category);
+    }
+    return products;
+  } catch {
+    const products = MOCK_PRODUCTS.filter((p) => p.isActive);
+    if (category && category !== "الكل") {
+      return products.filter((p) => p.category === category);
+    }
+    return products;
   }
-  return products;
 }
 
 export async function getAllProducts(): Promise<Product[]> {
-  const col = collection(db, "products");
-  const q = query(col, orderBy("sortOrder", "asc"));
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => docToProduct({ id: d.id, ...d.data() }));
+  try {
+    const col = collection(db, "products");
+    const q = query(col, orderBy("sortOrder", "asc"));
+    const snap = await getDocs(q);
+    const products = snap.docs.map((d) => docToProduct({ id: d.id, ...d.data() }));
+    if (products.length === 0) return [...MOCK_PRODUCTS];
+    return products;
+  } catch {
+    return [...MOCK_PRODUCTS];
+  }
 }
 
 export async function createProduct(data: Omit<Product, "id" | "createdAt">): Promise<Product> {

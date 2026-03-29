@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Product } from '@workspace/api-client-react';
+import type { Product } from '@/lib/firestore';
 
 export interface ProductVariant {
   nameAr: string;
@@ -11,7 +11,7 @@ export interface CartItem {
   product: Product;
   quantity: number;
   variant?: ProductVariant;
-  cartKey: string; // productId or `productId|variantName`
+  cartKey: string;
 }
 
 interface CartStore {
@@ -24,7 +24,7 @@ interface CartStore {
   getItemCount: () => number;
 }
 
-function makeCartKey(productId: number, variant?: ProductVariant) {
+function makeCartKey(productId: string, variant?: ProductVariant) {
   return variant ? `${productId}|${variant.nameAr}` : `${productId}`;
 }
 
